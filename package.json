@@ -6,9 +6,10 @@
     "dev": "next dev -H 0.0.0.0",
     "dev-local": "next dev",
     "build": "node scripts/check-env.js && next build",
+    "build:netlify": "node scripts/deploy-netlify.js",
     "start": "next start",
     "check-env": "node scripts/check-env.js",
-    "build:netlify": "npm run check-env && npm run build"
+    "export": "next export"
   },
   "dependencies": {
     "date-fns": "^4.1.0",

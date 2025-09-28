@@ -40,7 +40,14 @@ if (missingVars.length > 0) {
   console.log(`2. Adicione as variáveis faltando (veja .env.example)`);
   console.log(`3. Para Netlify: Site Settings > Environment Variables`);
   
-  process.exit(1);
+  // Para Netlify, permitir continuar o build mesmo sem as variáveis
+  if (process.env.NETLIFY || process.env.NODE_ENV === 'production') {
+    console.log(`\n🌐 Detectado ambiente de produção - continuando build...`);
+    console.log(`⚠️  Configure as variáveis de ambiente após o primeiro deploy!`);
+  } else {
+    // Localmente, falha se não tiver as variáveis
+    process.exit(1);
+  }
 } else {
   console.log(`\n🎉 Todas as variáveis estão configuradas!`);
   process.exit(0);

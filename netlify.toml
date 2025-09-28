@@ -1,10 +1,11 @@
 [build]
-  publish = ".next"
+  publish = "out"
   command = "npm run build"
 
 [build.environment]
   # Next.js build optimizations
   NEXT_TELEMETRY_DISABLED = "1"
+  NODE_VERSION = "18"
   
 [[plugins]]
   package = "@netlify/plugin-nextjs"
@@ -27,7 +28,6 @@
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = {Role = ["admin"], Country = ["US"]}
 
 # Cache static assets
 [[headers]]
