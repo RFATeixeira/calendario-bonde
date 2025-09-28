@@ -72,24 +72,35 @@ export default function Home() {
 
 
 
-  const handleDateClick = async (date: Date) => {
+  const handleDateClick = async (date: Date, hasUserEvent: boolean) => {
     if (!user) return;
 
-    // Se está no modo admin, mostrar modal de seleção de usuário
+    // Se for admin no modo admin, abrir modal de seleção
     if (user.isAdmin && isAdminMode) {
       setSelectedDate(date);
       setShowUserModal(true);
       return;
     }
 
-    // Comportamento normal para usuários não-admin ou admin não no modo admin
+    // Comportamento normal: toque simples adiciona ou remove evento
     const dateStr = formatISO(date, { representation: 'date' });
-    const existingEvent = events.find(event => 
-      event.date === dateStr && event.userId === user.uid
-    );
 
-    if (!existingEvent) {
-      // Marcar data - criar novo evento
+    if (hasUserEvent) {
+      // Remover evento existente do usuário
+      const existingEvent = events.find(event => 
+        event.date === dateStr && event.userId === user.uid
+      );
+      
+      if (existingEvent) {
+        try {
+          await deleteDoc(doc(db, 'events', existingEvent.id));
+        } catch (error) {
+          console.error('Erro ao deletar evento:', error);
+          alert('Erro ao desmarcar data. Tente novamente.');
+        }
+      }
+    } else {
+      // Adicionar novo evento
       try {
         await addDoc(collection(db, 'events'), {
           date: dateStr,
@@ -104,32 +115,6 @@ export default function Home() {
       } catch (error) {
         console.error('Erro ao criar evento:', error);
         alert('Erro ao marcar data. Tente novamente.');
-      }
-    }
-  };
-
-  const handleDateLongPress = async (date: Date) => {
-    if (!user) return;
-
-    // No modo admin, long press também abre o modal
-    if (user.isAdmin && isAdminMode) {
-      setSelectedDate(date);
-      setShowUserModal(true);
-      return;
-    }
-
-    const dateStr = formatISO(date, { representation: 'date' });
-    const existingEvent = events.find(event => 
-      event.date === dateStr && event.userId === user.uid
-    );
-
-    if (existingEvent) {
-      // Desmarcar data - remover evento
-      try {
-        await deleteDoc(doc(db, 'events', existingEvent.id));
-      } catch (error) {
-        console.error('Erro ao deletar evento:', error);
-        alert('Erro ao desmarcar data. Tente novamente.');
       }
     }
   };
@@ -208,7 +193,6 @@ export default function Home() {
               <Calendar
                 events={events}
                 onDateClick={handleDateClick}
-                onDateLongPress={handleDateLongPress}
                 currentUser={user}
               />
               <UserLegend 

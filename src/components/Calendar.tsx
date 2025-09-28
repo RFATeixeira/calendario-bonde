@@ -34,8 +34,7 @@ interface CalendarEvent {
 
 interface CalendarProps {
   events: CalendarEvent[];
-  onDateClick: (date: Date) => void;
-  onDateLongPress: (date: Date) => void;
+  onDateClick: (date: Date, hasUserEvent: boolean) => void;
   currentUser: {
     uid: string;
     displayName: string;
@@ -44,10 +43,8 @@ interface CalendarProps {
   };
 }
 
-export default function Calendar({ events, onDateClick, onDateLongPress, currentUser }: CalendarProps) {
+export default function Calendar({ events, onDateClick, currentUser }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
-  const [pressedDate, setPressedDate] = useState<Date | null>(null);
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -67,31 +64,10 @@ export default function Calendar({ events, onDateClick, onDateLongPress, current
     return events.filter(event => event.date === dateStr);
   };
 
-  const handleMouseDown = (date: Date) => {
-    setPressedDate(date);
-    const timer = setTimeout(() => {
-      onDateLongPress(date);
-      setPressTimer(null);
-      setPressedDate(null);
-    }, 1000);
-    setPressTimer(timer);
-  };
-
-  const handleMouseUp = (date: Date) => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
-      setPressedDate(null);
-      onDateClick(date);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (pressTimer) {
-      clearTimeout(pressTimer);
-      setPressTimer(null);
-      setPressedDate(null);
-    }
+  const handleDateClick = (date: Date) => {
+    const dayEvents = getEventsForDate(date);
+    const hasUserEvent = dayEvents.some(event => event.userId === currentUser.uid);
+    onDateClick(date, hasUserEvent);
   };
 
   const renderHeader = () => {
@@ -153,27 +129,21 @@ export default function Calendar({ events, onDateClick, onDateLongPress, current
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isTodayDate = isToday(day);
         const hasUserEvent = dayEvents.some(event => event.userId === currentUser.uid);
-        const isPressing = pressedDate && isSameDay(day, pressedDate);
 
         days.push(
           <div
             key={day.toString()}
             className={`
-              relative min-h-[100px] p-3 border cursor-pointer calendar-cell
+              relative min-h-[100px] p-3 border cursor-pointer calendar-cell transition-all duration-200
               ${!isCurrentMonth 
                 ? 'bg-gray-100 text-gray-500 border-gray-200' 
                 : 'bg-white text-gray-900 border-gray-300'
               }
               ${isTodayDate ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-300' : ''}
-              ${isPressing ? 'calendar-day-pressing scale-95' : ''}
-              hover:bg-gray-100
+              ${hasUserEvent ? 'ring-2 ring-blue-200 border-blue-300' : ''}
+              hover:bg-gray-100 hover:scale-105 active:scale-95
             `}
-            onMouseDown={() => handleMouseDown(cloneDay)}
-            onMouseUp={() => handleMouseUp(cloneDay)}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={() => handleMouseDown(cloneDay)}
-            onTouchEnd={() => handleMouseUp(cloneDay)}
-            onTouchCancel={handleMouseLeave}
+            onClick={() => handleDateClick(cloneDay)}
           >
             <div className="flex items-center justify-between mb-1">
               <span className={`
