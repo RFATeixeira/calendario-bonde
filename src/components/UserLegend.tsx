@@ -11,6 +11,7 @@ interface CalendarEvent {
   userPhoto?: string;
   title?: string;
   createdAt: Date;
+  customLetter?: string;
 }
 
 interface UserLegendProps {
@@ -20,6 +21,7 @@ interface UserLegendProps {
     displayName: string;
     photoURL?: string;
     isAdmin: boolean;
+    customLetter?: string;
   };
 }
 
@@ -30,18 +32,20 @@ export default function UserLegend({ events, currentUser }: UserLegendProps) {
       users.push({
         userId: event.userId,
         userName: event.userName,
-        userPhoto: event.userPhoto
+        userPhoto: event.userPhoto,
+        customLetter: event.customLetter
       });
     }
     return users;
-  }, [] as Array<{userId: string, userName: string, userPhoto?: string}>);
+  }, [] as Array<{userId: string, userName: string, userPhoto?: string, customLetter?: string}>);
 
   // Adicionar o usuário atual se ele não estiver na lista
   if (!uniqueUsers.find(user => user.userId === currentUser.uid)) {
     uniqueUsers.push({
       userId: currentUser.uid,
       userName: currentUser.displayName,
-      userPhoto: currentUser.photoURL
+      userPhoto: currentUser.photoURL,
+      customLetter: currentUser.customLetter
     });
   }
 
@@ -87,7 +91,7 @@ export default function UserLegend({ events, currentUser }: UserLegendProps) {
                 `}
                 title={user.userName}
               >
-                {user.userName.charAt(0).toUpperCase()}
+                {user.customLetter || user.userName.charAt(0).toUpperCase()}
               </div>
 
               {/* Informações do usuário */}

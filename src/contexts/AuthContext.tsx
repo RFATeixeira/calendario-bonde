@@ -11,6 +11,7 @@ interface UserData {
   displayName: string;
   photoURL?: string;
   isAdmin: boolean;
+  customLetter?: string;
 }
 
 interface AuthContextType {
@@ -44,7 +45,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: firebaseUser.email!,
             displayName: firebaseUser.displayName!,
             photoURL: firebaseUser.photoURL || undefined,
-            isAdmin: data.isAdmin || false
+            isAdmin: data.isAdmin || false,
+            customLetter: data.customLetter || undefined
           };
           
           // Atualizar informações do usuário se necessário
@@ -61,7 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: firebaseUser.email!,
             displayName: firebaseUser.displayName!,
             photoURL: firebaseUser.photoURL || undefined,
-            isAdmin: false
+            isAdmin: false,
+            customLetter: undefined
           };
           
           await setDoc(doc(db, 'users', firebaseUser.uid), {

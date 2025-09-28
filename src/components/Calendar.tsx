@@ -19,6 +19,7 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { getUserColor } from '@/lib/userColors';
+import { getUserDisplayLetter } from '@/lib/userUtils';
 
 interface CalendarEvent {
   id: string;
@@ -28,6 +29,7 @@ interface CalendarEvent {
   userPhoto?: string;
   title?: string;
   createdAt: Date;
+  customLetter?: string;
 }
 
 interface CalendarProps {
@@ -193,7 +195,7 @@ export default function Calendar({ events, onDateClick, onDateLongPress, current
                     `}
                     title={event.userName}
                   >
-                    {event.userName.charAt(0).toUpperCase()}
+                    {event.customLetter || event.userName.charAt(0).toUpperCase()}
                   </div>
                 ))}
               </div>

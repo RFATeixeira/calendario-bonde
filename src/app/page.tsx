@@ -31,6 +31,7 @@ interface CalendarEvent {
   userPhoto?: string;
   title?: string;
   createdAt: Date;
+  customLetter?: string;
 }
 
 export default function Home() {
@@ -59,6 +60,7 @@ export default function Home() {
           userPhoto: data.userPhoto,
           title: data.title,
           createdAt: data.createdAt.toDate(),
+          customLetter: data.customLetter,
         });
       });
       setEvents(eventsData);
@@ -97,6 +99,7 @@ export default function Home() {
           title: null,
           createdAt: new Date(),
           createdBy: user.uid,
+          customLetter: user.customLetter || null,
         });
       } catch (error) {
         console.error('Erro ao criar evento:', error);
@@ -162,6 +165,7 @@ export default function Home() {
           title: null,
           createdAt: new Date(),
           createdBy: user.uid, // Quem criou foi o admin
+          customLetter: userData?.customLetter || null,
         });
       } catch (error) {
         console.error('Erro ao criar evento:', error);
@@ -191,10 +195,10 @@ export default function Home() {
   return (
     <>
       <ServiceWorkerRegistration />
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-24">
         <Header />
         
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           {eventsLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
