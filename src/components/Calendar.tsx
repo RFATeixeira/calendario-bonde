@@ -20,6 +20,8 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { getUserColor } from '@/lib/userColors';
 import { getUserDisplayLetter } from '@/lib/userUtils';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import PullToRefreshIndicator from './PullToRefreshIndicator';
 
 interface CalendarEvent {
   id: string;
@@ -35,6 +37,7 @@ interface CalendarEvent {
 interface CalendarProps {
   events: CalendarEvent[];
   onDateClick: (date: Date, hasUserEvent: boolean) => void;
+  onRefresh?: () => Promise<void> | void;
   currentUser: {
     uid: string;
     displayName: string;
@@ -43,8 +46,30 @@ interface CalendarProps {
   };
 }
 
-export default function Calendar({ events, onDateClick, currentUser }: CalendarProps) {
+export default function Calendar({ events, onDateClick, onRefresh, currentUser }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Sistema de pull-to-refresh
+  const handleRefresh = async () => {
+    if (onRefresh) {
+      await onRefresh();
+    } else {
+      // Fallback: recarrega a página
+      window.location.reload();
+    }
+  };
+
+  const {
+    isPulling,
+    isRefreshing,
+    pullDistance,
+    shouldRefresh,
+    pullProgress
+  } = usePullToRefresh({
+    onRefresh: handleRefresh,
+    threshold: 40, // 40% da tela
+    resistance: 2.5
+  });
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -72,32 +97,21 @@ export default function Calendar({ events, onDateClick, currentUser }: CalendarP
 
   const renderHeader = () => {
     return (
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <h2 className="text-2xl font-bold text-gray-900">
-            {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
-          </h2>
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={prevMonth}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110"
-            >
-              <ChevronLeft className="h-5 w-5 text-gray-700" />
-            </button>
-            <button
-              onClick={nextMonth}
-              className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110"
-            >
-              <ChevronRight className="h-5 w-5 text-gray-700" />
-            </button>
-          </div>
-        </div>
+      <div className="flex items-center justify-center mb-6">
         <button
-          onClick={() => setCurrentMonth(new Date())}
-          className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+          onClick={prevMonth}
+          className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110"
         >
-          <CalendarIcon className="h-4 w-4" />
-          <span>Hoje</span>
+          <ChevronLeft className="h-5 w-5 text-gray-700" />
+        </button>
+        <h2 className="text-2xl font-bold text-gray-900 mx-6">
+          {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+        </h2>
+        <button
+          onClick={nextMonth}
+          className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110"
+        >
+          <ChevronRight className="h-5 w-5 text-gray-700" />
         </button>
       </div>
     );
@@ -186,10 +200,27 @@ export default function Calendar({ events, onDateClick, currentUser }: CalendarP
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 glass-card">
-      {renderHeader()}
-      {renderDaysOfWeek()}
-      {renderCells()}
-    </div>
+    <>
+      {/* Indicador de Pull-to-Refresh */}
+      <PullToRefreshIndicator
+        isPulling={isPulling}
+        isRefreshing={isRefreshing}
+        pullDistance={pullDistance}
+        shouldRefresh={shouldRefresh}
+        pullProgress={pullProgress}
+      />
+
+      {/* Calendar Container com ajuste para pull-to-refresh */}
+      <div 
+        className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 glass-card transition-transform duration-200 ease-out"
+        style={{
+          transform: isPulling || isRefreshing ? `translateY(${Math.max(0, pullDistance * 0.3)}px)` : 'translateY(0)',
+        }}
+      >
+        {renderHeader()}
+        {renderDaysOfWeek()}
+        {renderCells()}
+      </div>
+    </>
   );
 }

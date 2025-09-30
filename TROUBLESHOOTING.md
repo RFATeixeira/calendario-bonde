@@ -1,8 +1,61 @@
-# 🔧 Resolução do Erro de Permissão
+# 🔧 Solução: Login Infinito com Google
 
-## ❌ Erro: "Missing or insufficient permissions"
+## 🚨 Problema Identificado
+Usuários novos ficam em loop infinito de carregamento ao tentar fazer login com Google.
 
-Este erro indica que as regras de segurança do Firestore não estão configuradas corretamente.
+## 🔍 Causa Provável
+1. **Firebase Auth** funciona (usuário autentica)
+2. **Firestore** falha ao criar documento do usuário
+3. **Loop infinito** no `onAuthStateChanged`
+
+## ✅ Soluções Implementadas
+
+### 1. **Logging Melhorado**
+Adicionado logs detalhados no `AuthContext.tsx`:
+- ✅ Tracking do processo de autenticação
+- ✅ Identificação de erros específicos
+- ✅ Fallback para dados básicos em caso de erro
+
+### 2. **Tratamento de Erro Robusto**
+- ✅ Try/catch em todas as operações Firestore
+- ✅ Continua login mesmo se Firestore falhar
+- ✅ Usa dados básicos do Firebase Auth como fallback
+
+## 🚀 Como Aplicar as Correções
+
+### **Passo 1: Usar Regras Firestore Simplificadas**
+1. Acesse [Firebase Console](https://console.firebase.google.com/)
+2. Selecione projeto "calendario-bonde"
+3. Vá em **Firestore Database** > **Regras**
+4. Cole as regras do arquivo `firestore-simple.rules`
+5. Clique **"Publicar"**
+
+### **Passo 2: Deploy do Código Atualizado**
+```bash
+npm run build
+# Faça o deploy no Netlify
+```
+
+### **Passo 3: Testar Login**
+1. Abra o DevTools (F12) 
+2. Vá na aba **Console**
+3. Tente fazer login
+4. Observe os logs com emojis (👤, 📄, 🆕, etc.)
+
+## 🔍 Debug com Console
+
+Você verá logs como:
+```
+👤 Usuário autenticado: email@gmail.com
+🆕 Criando novo usuário
+✅ Novo usuário criado no Firestore
+✅ Usuário definido no contexto
+🏁 Loading finalizado
+```
+
+---
+
+## ❌ Outros Erros Comum: "Missing or insufficient permissions"
 
 ### ✅ Solução Rápida
 

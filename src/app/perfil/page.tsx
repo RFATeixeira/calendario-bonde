@@ -102,6 +102,18 @@ const PerfilPage = () => {
               src={user.photoURL} 
               alt={getDisplayName()}
               className="w-20 h-20 rounded-full mx-auto mb-4 object-cover shadow-lg border-4 border-white"
+              onError={(e) => {
+                // Se a imagem falhar ao carregar, esconder e mostrar fallback
+                const target = e.target as HTMLImageElement;
+                target.style.display = 'none';
+                const parent = target.parentElement;
+                if (parent && !parent.querySelector('.profile-fallback')) {
+                  const fallbackDiv = document.createElement('div');
+                  fallbackDiv.className = 'profile-fallback inline-flex items-center justify-center w-20 h-20 bg-blue-500 rounded-full mb-4 text-white text-2xl font-bold shadow-lg';
+                  fallbackDiv.textContent = getInitials();
+                  parent.appendChild(fallbackDiv);
+                }
+              }}
             />
           ) : (
             <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-500 rounded-full mb-4 text-white text-2xl font-bold shadow-lg">

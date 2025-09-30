@@ -139,7 +139,19 @@ export default function ConfiguracoesPage() {
                 <img
                   src={user.photoURL}
                   alt={user.displayName}
-                  className="h-16 w-16 rounded-full"
+                  className="h-16 w-16 rounded-full object-cover"
+                  onError={(e) => {
+                    // Se a imagem falhar ao carregar, esconder e mostrar fallback
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent && !parent.querySelector('.config-fallback')) {
+                      const fallbackDiv = document.createElement('div');
+                      fallbackDiv.className = 'config-fallback h-16 w-16 bg-gray-300 rounded-full flex items-center justify-center';
+                      fallbackDiv.innerHTML = '<svg class="h-8 w-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
+                      parent.appendChild(fallbackDiv);
+                    }
+                  }}
                 />
               ) : (
                 <div className="h-16 w-16 bg-gray-300 rounded-full flex items-center justify-center">

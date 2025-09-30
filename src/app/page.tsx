@@ -41,6 +41,39 @@ export default function Home() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
+  // Função para recarregar eventos manualmente
+  const refreshEvents = async () => {
+    if (!user) return;
+
+    setEventsLoading(true);
+    
+    try {
+      const eventsRef = collection(db, 'events');
+      const q = query(eventsRef, orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      const eventsData: CalendarEvent[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        eventsData.push({
+          id: doc.id,
+          date: data.date,
+          userId: data.userId,
+          userName: data.userName,
+          userPhoto: data.userPhoto,
+          title: data.title,
+          createdAt: data.createdAt.toDate(),
+          customLetter: data.customLetter,
+        });
+      });
+      setEvents(eventsData);
+    } catch (error) {
+      console.error('Erro ao recarregar eventos:', error);
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
   // Carregar eventos em tempo real
   useEffect(() => {
     if (!user) return;
@@ -193,6 +226,7 @@ export default function Home() {
               <Calendar
                 events={events}
                 onDateClick={handleDateClick}
+                onRefresh={refreshEvents}
                 currentUser={user}
               />
               <UserLegend 
