@@ -23,6 +23,7 @@ import Calendar from '@/components/Calendar';
 import UserLegend from '@/components/UserLegend';
 import UserSelectionModal from '@/components/UserSelectionModal';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
+import UpdateNotification from '@/components/UpdateNotification';
 
 interface CalendarEvent {
   id: string;
@@ -42,6 +43,7 @@ export default function Home() {
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [usersMap, setUsersMap] = useState<Map<string, { customLetter?: string; displayName: string }>>(new Map());
+  const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Função para carregar informações atuais dos usuários
   const loadUsersData = async (userIds: string[]) => {
@@ -262,6 +264,7 @@ export default function Home() {
   return (
     <>
       <ServiceWorkerRegistration />
+      <UpdateNotification />
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-24">
         <Header />
         
@@ -277,10 +280,14 @@ export default function Home() {
                 onDateClick={handleDateClick}
                 onRefresh={refreshEvents}
                 usersMap={usersMap}
+                currentMonth={currentMonth}
+                onMonthChange={setCurrentMonth}
                 currentUser={user}
               />
               <UserLegend 
                 events={events}
+                usersMap={usersMap}
+                currentMonth={currentMonth}
                 currentUser={user}
               />
             </>

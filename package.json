@@ -5,11 +5,13 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0",
     "dev-local": "next dev",
-    "build": "node scripts/check-env.js && next build",
-    "build:netlify": "node scripts/deploy-netlify.js",
+    "build": "node scripts/update-sw-version.js && node scripts/check-env.js && next build",
+    "build:netlify": "node scripts/update-sw-version.js && node scripts/deploy-netlify.js",
+    "build:force-update": "node scripts/update-sw-version.js && node scripts/check-env.js && next build",
     "start": "next start",
     "check-env": "node scripts/check-env.js",
-    "export": "next export"
+    "export": "next export",
+    "update-sw": "node scripts/update-sw-version.js"
   },
   "dependencies": {
     "date-fns": "^4.1.0",

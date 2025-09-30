@@ -2,6 +2,8 @@
 
 import { getUserColor } from '@/lib/userColors';
 import { Users } from 'lucide-react';
+import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface CalendarEvent {
   id: string;
@@ -16,6 +18,8 @@ interface CalendarEvent {
 
 interface UserLegendProps {
   events: CalendarEvent[];
+  usersMap?: Map<string, { customLetter?: string; displayName: string }>;
+  currentMonth: Date;
   currentUser: {
     uid: string;
     displayName: string;
@@ -25,15 +29,56 @@ interface UserLegendProps {
   };
 }
 
-export default function UserLegend({ events, currentUser }: UserLegendProps) {
-  // Obter usuários únicos dos eventos
-  const uniqueUsers = events.reduce((users, event) => {
+export default function UserLegend({ events, usersMap, currentMonth, currentUser }: UserLegendProps) {
+  // Calcular início e fim do mês atual
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+
+  // Filtrar eventos apenas do mês atual
+  const currentMonthEvents = events.filter(event => {
+    try {
+      const eventDate = parseISO(event.date);
+      return isWithinInterval(eventDate, { start: monthStart, end: monthEnd });
+    } catch {
+      return false; // Se a data for inválida, exclui o evento
+    }
+  });
+
+  // Função para obter os dados atuais do usuário (nome e letra)
+  const getCurrentUserData = (userId: string, eventUserName: string, eventCustomLetter?: string) => {
+    // 1. Se for o usuário atual, sempre usa os dados mais recentes do contexto
+    if (userId === currentUser.uid) {
+      return {
+        userName: currentUser.displayName,
+        customLetter: currentUser.customLetter
+      };
+    }
+    
+    // 2. Se temos dados atualizados no usersMap, usa de lá
+    if (usersMap && usersMap.has(userId)) {
+      const userData = usersMap.get(userId);
+      return {
+        userName: userData?.displayName || eventUserName,
+        customLetter: userData?.customLetter
+      };
+    }
+    
+    // 3. Fallback: usa os dados salvos no evento
+    return {
+      userName: eventUserName,
+      customLetter: eventCustomLetter
+    };
+  };
+
+  // Obter usuários únicos dos eventos do mês atual com dados atualizados
+  const uniqueUsers = currentMonthEvents.reduce((users, event) => {
     if (!users.find(user => user.userId === event.userId)) {
+      const currentData = getCurrentUserData(event.userId, event.userName, event.customLetter);
       users.push({
         userId: event.userId,
-        userName: event.userName,
+        userName: currentData.userName,
         userPhoto: event.userPhoto,
-        customLetter: event.customLetter
+        customLetter: currentData.customLetter
       });
     }
     return users;
@@ -41,11 +86,12 @@ export default function UserLegend({ events, currentUser }: UserLegendProps) {
 
   // Adicionar o usuário atual se ele não estiver na lista
   if (!uniqueUsers.find(user => user.userId === currentUser.uid)) {
+    const currentData = getCurrentUserData(currentUser.uid, currentUser.displayName, currentUser.customLetter);
     uniqueUsers.push({
       userId: currentUser.uid,
-      userName: currentUser.displayName,
+      userName: currentData.userName,
       userPhoto: currentUser.photoURL,
-      customLetter: currentUser.customLetter
+      customLetter: currentData.customLetter
     });
   }
 
@@ -63,13 +109,13 @@ export default function UserLegend({ events, currentUser }: UserLegendProps) {
       <div className="flex items-center space-x-2 mb-4">
         <Users className="h-5 w-5 text-gray-700" />
         <h3 className="text-lg font-semibold text-gray-900">
-          Usuários
+          Usuários - {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
         </h3>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {uniqueUsers.map((user) => {
-          const eventCount = events.filter(event => event.userId === user.userId).length;
+          const eventCount = currentMonthEvents.filter(event => event.userId === user.userId).length;
           const isCurrentUser = user.userId === currentUser.uid;
           
           return (
@@ -125,7 +171,7 @@ export default function UserLegend({ events, currentUser }: UserLegendProps) {
       <div className="mt-4 pt-4 border-t border-gray-200">
         <div className="flex items-center justify-between text-sm font-medium text-gray-700">
           <span>{uniqueUsers.length} {uniqueUsers.length === 1 ? 'usuário' : 'usuários'}</span>
-          <span>{events.length} {events.length === 1 ? 'agendamento' : 'agendamentos'} total</span>
+          <span>{currentMonthEvents.length} {currentMonthEvents.length === 1 ? 'agendamento' : 'agendamentos'} em {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</span>
         </div>
       </div>
     </div>

@@ -39,6 +39,8 @@ interface CalendarProps {
   onDateClick: (date: Date, hasUserEvent: boolean) => void;
   onRefresh?: () => Promise<void> | void;
   usersMap?: Map<string, { customLetter?: string; displayName: string }>;
+  currentMonth: Date;
+  onMonthChange: (date: Date) => void;
   currentUser: {
     uid: string;
     displayName: string;
@@ -48,8 +50,7 @@ interface CalendarProps {
   };
 }
 
-export default function Calendar({ events, onDateClick, onRefresh, usersMap, currentUser }: CalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+export default function Calendar({ events, onDateClick, onRefresh, usersMap, currentMonth, onMonthChange, currentUser }: CalendarProps) {
 
   // Sistema de pull-to-refresh
   const handleRefresh = async () => {
@@ -79,11 +80,11 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
   const endDate = endOfWeek(monthEnd, { locale: ptBR });
 
   const nextMonth = () => {
-    setCurrentMonth(addMonths(currentMonth, 1));
+    onMonthChange(addMonths(currentMonth, 1));
   };
 
   const prevMonth = () => {
-    setCurrentMonth(subMonths(currentMonth, 1));
+    onMonthChange(subMonths(currentMonth, 1));
   };
 
   const getEventsForDate = (date: Date): CalendarEvent[] => {
