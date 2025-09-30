@@ -38,15 +38,17 @@ interface CalendarProps {
   events: CalendarEvent[];
   onDateClick: (date: Date, hasUserEvent: boolean) => void;
   onRefresh?: () => Promise<void> | void;
+  usersMap?: Map<string, { customLetter?: string; displayName: string }>;
   currentUser: {
     uid: string;
     displayName: string;
     photoURL?: string;
     isAdmin: boolean;
+    customLetter?: string;
   };
 }
 
-export default function Calendar({ events, onDateClick, onRefresh, currentUser }: CalendarProps) {
+export default function Calendar({ events, onDateClick, onRefresh, usersMap, currentUser }: CalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Sistema de pull-to-refresh
@@ -67,8 +69,8 @@ export default function Calendar({ events, onDateClick, onRefresh, currentUser }
     pullProgress
   } = usePullToRefresh({
     onRefresh: handleRefresh,
-    threshold: 40, // 40% da tela
-    resistance: 2.5
+    threshold: 15, // 15% da tela - muito mais fácil
+    resistance: 2.0 // Reduzida a resistência também
   });
 
   const monthStart = startOfMonth(currentMonth);
@@ -131,6 +133,30 @@ export default function Calendar({ events, onDateClick, onRefresh, currentUser }
     );
   };
 
+  // Função para obter a letra de exibição atual do usuário
+  const getCurrentUserLetter = (userId: string, userName: string, eventCustomLetter?: string): string => {
+    // 1. Se for o usuário atual, sempre usa a customLetter mais recente do contexto
+    if (userId === currentUser.uid && currentUser.customLetter) {
+      return currentUser.customLetter;
+    }
+    
+    // 2. Se temos dados atualizados no usersMap, usa de lá
+    if (usersMap && usersMap.has(userId)) {
+      const userData = usersMap.get(userId);
+      if (userData?.customLetter) {
+        return userData.customLetter;
+      }
+    }
+    
+    // 3. Se não, usa a customLetter salva no evento (pode estar desatualizada)
+    if (eventCustomLetter) {
+      return eventCustomLetter;
+    }
+    
+    // 4. Fallback: primeira letra do nome
+    return userName.charAt(0).toUpperCase();
+  };
+
   const renderCells = () => {
     const rows = [];
     let days = [];
@@ -179,7 +205,7 @@ export default function Calendar({ events, onDateClick, onRefresh, currentUser }
                     `}
                     title={event.userName}
                   >
-                    {event.customLetter || event.userName.charAt(0).toUpperCase()}
+                    {getCurrentUserLetter(event.userId, event.userName, event.customLetter)}
                   </div>
                 ))}
               </div>
@@ -214,7 +240,8 @@ export default function Calendar({ events, onDateClick, onRefresh, currentUser }
       <div 
         className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 glass-card transition-transform duration-200 ease-out"
         style={{
-          transform: isPulling || isRefreshing ? `translateY(${Math.max(0, pullDistance * 0.3)}px)` : 'translateY(0)',
+          transform: isPulling || isRefreshing ? `translateY(${Math.max(0, pullDistance * 0.1)}px)` : 'translateY(0)',
+          marginTop: isPulling || isRefreshing ? '20px' : '0px'
         }}
       >
         {renderHeader()}

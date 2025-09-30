@@ -7,6 +7,7 @@ import {
   addDoc, 
   deleteDoc, 
   doc, 
+  getDoc,
   onSnapshot, 
   query, 
   orderBy,
@@ -40,6 +41,36 @@ export default function Home() {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [usersMap, setUsersMap] = useState<Map<string, { customLetter?: string; displayName: string }>>(new Map());
+
+  // Função para carregar informações atuais dos usuários
+  const loadUsersData = async (userIds: string[]) => {
+    try {
+      const uniqueUserIds = [...new Set(userIds)];
+      const newUsersMap = new Map();
+      
+      for (const userId of uniqueUserIds) {
+        try {
+          const userDocRef = doc(db, 'users', userId);
+          const userDoc = await getDoc(userDocRef);
+          
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            newUsersMap.set(userId, {
+              customLetter: userData.customLetter,
+              displayName: userData.displayName || userData.email?.split('@')[0] || 'Usuário'
+            });
+          }
+        } catch (error) {
+          console.error(`Erro ao carregar dados do usuário ${userId}:`, error);
+        }
+      }
+      
+      setUsersMap(newUsersMap);
+    } catch (error) {
+      console.error('Erro ao carregar dados dos usuários:', error);
+    }
+  };
 
   // Função para recarregar eventos manualmente
   const refreshEvents = async () => {
@@ -53,6 +84,8 @@ export default function Home() {
       const snapshot = await getDocs(q);
       
       const eventsData: CalendarEvent[] = [];
+      const userIds: string[] = [];
+      
       snapshot.forEach((doc) => {
         const data = doc.data();
         eventsData.push({
@@ -65,8 +98,15 @@ export default function Home() {
           createdAt: data.createdAt.toDate(),
           customLetter: data.customLetter,
         });
+        userIds.push(data.userId);
       });
+      
       setEvents(eventsData);
+      
+      // Carrega dados atuais dos usuários
+      if (userIds.length > 0) {
+        await loadUsersData(userIds);
+      }
     } catch (error) {
       console.error('Erro ao recarregar eventos:', error);
     } finally {
@@ -81,8 +121,10 @@ export default function Home() {
     const eventsRef = collection(db, 'events');
     const q = query(eventsRef, orderBy('createdAt', 'desc'));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
       const eventsData: CalendarEvent[] = [];
+      const userIds: string[] = [];
+      
       snapshot.forEach((doc) => {
         const data = doc.data();
         eventsData.push({
@@ -95,9 +137,16 @@ export default function Home() {
           createdAt: data.createdAt.toDate(),
           customLetter: data.customLetter,
         });
+        userIds.push(data.userId);
       });
+      
       setEvents(eventsData);
       setEventsLoading(false);
+      
+      // Carrega dados atuais dos usuários
+      if (userIds.length > 0) {
+        await loadUsersData(userIds);
+      }
     });
 
     return unsubscribe;
@@ -227,6 +276,7 @@ export default function Home() {
                 events={events}
                 onDateClick={handleDateClick}
                 onRefresh={refreshEvents}
+                usersMap={usersMap}
                 currentUser={user}
               />
               <UserLegend 

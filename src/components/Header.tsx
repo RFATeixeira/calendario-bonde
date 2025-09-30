@@ -33,12 +33,12 @@ export default function Header() {
           </div>
 
           {/* Controles e Menu */}
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center justify-center space-x-2 sm:space-x-4">
             {/* Botão modo administrador - só visível para admins */}
             {user?.isAdmin && (
               <button
                 onClick={toggleAdminMode}
-                className={`p-1.5 sm:p-2 rounded-lg transition-colors duration-200 ${
+                className={`flex items-center justify-center p-1.5 sm:p-2 rounded-lg transition-colors duration-200 ${
                   isAdminMode
                     ? 'bg-blue-100 hover:bg-blue-200'
                     : 'hover:bg-gray-100'
@@ -46,9 +46,9 @@ export default function Header() {
                 title={isAdminMode ? 'Desativar modo administrador' : 'Ativar modo administrador'}
               >
                 {isAdminMode ? (
-                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                  <Shield className="h-5 w-5 sm:h-5 sm:w-5 text-blue-600" />
                 ) : (
-                  <ShieldOff className="h-4 w-4 sm:h-5 sm:w-5 text-gray-700" />
+                  <ShieldOff className="h-5 w-5 sm:h-5 sm:w-5 text-gray-700" />
                 )}
               </button>
             )}
