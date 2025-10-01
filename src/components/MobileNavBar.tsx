@@ -9,12 +9,14 @@ import {
   Settings, 
   User 
 } from 'lucide-react';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
 const MobileNavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [activeIndex, setActiveIndex] = useState(2); // Calendário é o padrão (índice 2)
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const unreadCount = useUnreadNotifications();
 
   const navItems = [
     {
@@ -128,6 +130,13 @@ const MobileNavBar = () => {
                     size={26} 
                     strokeWidth={isActive ? 2.5 : 2}
                   />
+                  
+                  {/* Badge de notificações não lidas - apenas no ícone Bell */}
+                  {item.icon === Bell && unreadCount > 0 && (
+                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg border-2 border-white">
+                      {unreadCount <= 99 ? unreadCount : '99+'}
+                    </div>
+                  )}
                 </div>
               </button>
             );
