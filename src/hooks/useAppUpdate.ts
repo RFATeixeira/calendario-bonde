@@ -88,10 +88,10 @@ export const useAppUpdate = () => {
         names.forEach((name) => {
           caches.delete(name);
         });
-        window.location.reload();
+        (window as any).location.reload();
       });
     } else if (typeof window !== 'undefined') {
-      window.location.reload();
+      (window as any).location.reload();
     }
   };
 

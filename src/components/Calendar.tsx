@@ -20,8 +20,6 @@ import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
 import { getUserColor } from '@/lib/userColors';
 import { getUserDisplayLetter } from '@/lib/userUtils';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
-import PullToRefreshIndicator from './PullToRefreshIndicator';
 
 interface CalendarEvent {
   id: string;
@@ -61,18 +59,6 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
       window.location.reload();
     }
   };
-
-  const {
-    isPulling,
-    isRefreshing,
-    pullDistance,
-    shouldRefresh,
-    pullProgress
-  } = usePullToRefresh({
-    onRefresh: handleRefresh,
-    threshold: 15, // 15% da tela - muito mais fácil
-    resistance: 2.0 // Reduzida a resistência também
-  });
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);
@@ -227,28 +213,10 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
   };
 
   return (
-    <>
-      {/* Indicador de Pull-to-Refresh */}
-      <PullToRefreshIndicator
-        isPulling={isPulling}
-        isRefreshing={isRefreshing}
-        pullDistance={pullDistance}
-        shouldRefresh={shouldRefresh}
-        pullProgress={pullProgress}
-      />
-
-      {/* Calendar Container com ajuste para pull-to-refresh */}
-      <div 
-        className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 glass-card transition-transform duration-200 ease-out"
-        style={{
-          transform: isPulling || isRefreshing ? `translateY(${Math.max(0, pullDistance * 0.1)}px)` : 'translateY(0)',
-          marginTop: isPulling || isRefreshing ? '20px' : '0px'
-        }}
-      >
-        {renderHeader()}
-        {renderDaysOfWeek()}
-        {renderCells()}
-      </div>
-    </>
+    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 glass-card">
+      {renderHeader()}
+      {renderDaysOfWeek()}
+      {renderCells()}
+    </div>
   );
 }

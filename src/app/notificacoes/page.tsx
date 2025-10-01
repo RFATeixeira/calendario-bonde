@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Bell, Check, X, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { Bell, Check, X, Clock, AlertCircle, Loader2, Plus } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, orderBy, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, updateDoc, doc, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 interface Notification {
@@ -23,6 +23,22 @@ const NotificacoesPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loadingNotifications, setLoadingNotifications] = useState(true);
   const [updatingNotifications, setUpdatingNotifications] = useState(false);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminForm, setAdminForm] = useState({
+    type: 'sistema' as 'evento' | 'lembrete' | 'sistema',
+    title: '',
+    message: '',
+    targetType: 'all' as 'all' | 'specific'
+  });
+  const [creatingNotification, setCreatingNotification] = useState(false);
+  
+  // Log admin status for debugging
+  useEffect(() => {
+    if (user) {
+      console.log('👤 User admin status:', user.isAdmin);
+      console.log('👤 User email:', user.email);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -144,6 +160,99 @@ const NotificacoesPage = () => {
     }
   };
 
+  const clearAllNotificationsAdmin = async () => {
+    if (!user || !user.isAdmin || updatingNotifications) return;
+    if (!confirm('⚠️ ADMIN: Tem certeza que deseja apagar TODAS as notificações de TODOS os usuários? Esta ação não pode ser desfeita!')) return;
+    if (!confirm('⚠️ CONFIRMAÇÃO FINAL: Esta ação irá apagar todas as notificações do sistema. Continuar?')) return;
+
+    setUpdatingNotifications(true);
+    try {
+      // Buscar todas as notificações do sistema
+      const allNotificationsQuery = query(collection(db, 'notifications'));
+      const allNotificationsSnapshot = await getDocs(allNotificationsQuery);
+      
+      console.log(`🗑️ Admin deletando ${allNotificationsSnapshot.docs.length} notificações do sistema`);
+      
+      // Deletar todas as notificações
+      const deletePromises = allNotificationsSnapshot.docs.map(docSnapshot => 
+        deleteDoc(docSnapshot.ref)
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Limpar lista local
+      setNotifications([]);
+      
+      alert(`✅ ${allNotificationsSnapshot.docs.length} notificações foram removidas do sistema.`);
+    } catch (error) {
+      console.error('Erro ao limpar todas as notificações (admin):', error);
+      alert('❌ Erro ao limpar notificações. Tente novamente.');
+    } finally {
+      setUpdatingNotifications(false);
+    }
+  };
+
+  const handleAdminFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!adminForm.title.trim() || !adminForm.message.trim()) {
+      alert('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    setCreatingNotification(true);
+    try {
+      if (adminForm.targetType === 'all') {
+        // Create notification for all users
+        // First, get all users
+        const usersQuery = query(collection(db, 'users'));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        // Create notification for each user
+        const notificationPromises = usersSnapshot.docs.map(async (userDoc) => {
+          const notificationData = {
+            type: adminForm.type,
+            title: adminForm.title,
+            message: adminForm.message,
+            read: false,
+            createdAt: new Date(),
+            userId: userDoc.id
+          };
+          
+          return addDoc(collection(db, 'notifications'), notificationData);
+        });
+        
+        await Promise.all(notificationPromises);
+        console.log(`Notificação criada para ${usersSnapshot.docs.length} usuários`);
+      } else {
+        // For specific users - for now, we'll implement this later
+        console.log('Funcionalidade de usuários específicos será implementada futuramente');
+      }
+      
+      // Reset form and close modal
+      setAdminForm({
+        type: 'sistema',
+        title: '',
+        message: '',
+        targetType: 'all'
+      });
+      setShowAdminModal(false);
+      alert('Notificação criada com sucesso!');
+    } catch (error) {
+      console.error('Erro ao criar notificação:', error);
+      alert('Erro ao criar notificação. Tente novamente.');
+    } finally {
+      setCreatingNotification(false);
+    }
+  };
+
+  const handleAdminFormChange = (field: string, value: string) => {
+    setAdminForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case 'evento': return AlertCircle;
@@ -195,27 +304,64 @@ const NotificacoesPage = () => {
           </p>
         </div>
 
+        {/* Admin Button - Only for admin users */}
+        {user?.isAdmin && (
+          <div className="mb-6">
+            <button 
+              onClick={() => setShowAdminModal(true)}
+              className="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-4 rounded-xl transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Criar Notificação
+            </button>
+          </div>
+        )}
+
         {/* Action Buttons */}
         {notifications.length > 0 && (
-          <div className="flex gap-2 mb-6">
-            <button 
-              onClick={markAllAsRead}
-              disabled={updatingNotifications || unreadCount === 0}
-              className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center"
-            >
-              {updatingNotifications ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                'Marcar todas como lidas'
-              )}
-            </button>
-            <button 
-              onClick={clearAllNotifications}
-              disabled={updatingNotifications}
-              className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
-            >
-              Limpar todas
-            </button>
+          <div className="space-y-3 mb-6">
+            {/* Regular user buttons */}
+            <div className="flex gap-2">
+              <button 
+                onClick={markAllAsRead}
+                disabled={updatingNotifications || unreadCount === 0}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center"
+              >
+                {updatingNotifications ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  'Marcar todas como lidas'
+                )}
+              </button>
+              <button 
+                onClick={clearAllNotifications}
+                disabled={updatingNotifications}
+                className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
+              >
+                Limpar todas
+              </button>
+            </div>
+            
+            {/* Admin button */}
+            {user?.isAdmin && (
+              <button 
+                onClick={clearAllNotificationsAdmin}
+                disabled={updatingNotifications}
+                className="w-full bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm flex items-center justify-center gap-2"
+              >
+                {updatingNotifications ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Limpando...
+                  </>
+                ) : (
+                  <>
+                    <X className="w-4 h-4" />
+                    🛡️ Admin: Limpar TODAS as notificações do sistema
+                  </>
+                )}
+              </button>
+            )}
           </div>
         )}
 
@@ -288,6 +434,109 @@ const NotificacoesPage = () => {
           </div>
         )}
       </div>
+
+      {/* Admin Modal for Creating Notifications */}
+      {showAdminModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-gray-800">Criar Notificação</h2>
+              <button 
+                onClick={() => setShowAdminModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAdminFormSubmit} className="space-y-4">
+              {/* Notification Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tipo de Notificação
+                </label>
+                <select 
+                  value={adminForm.type}
+                  onChange={(e) => handleAdminFormChange('type', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="sistema">Sistema</option>
+                  <option value="evento">Evento</option>
+                  <option value="lembrete">Lembrete</option>
+                </select>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Título
+                </label>
+                <input 
+                  type="text" 
+                  value={adminForm.title}
+                  onChange={(e) => handleAdminFormChange('title', e.target.value)}
+                  placeholder="Digite o título da notificação"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Mensagem
+                </label>
+                <textarea 
+                  value={adminForm.message}
+                  onChange={(e) => handleAdminFormChange('message', e.target.value)}
+                  placeholder="Digite a mensagem da notificação"
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                />
+              </div>
+
+              {/* Target Users */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Destinatários
+                </label>
+                <select 
+                  value={adminForm.targetType}
+                  onChange={(e) => handleAdminFormChange('targetType', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">Todos os usuários</option>
+                  <option value="specific">Usuários específicos</option>
+                </select>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setShowAdminModal(false)}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={creatingNotification}
+                  className="flex-1 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {creatingNotification ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Criando...
+                    </>
+                  ) : (
+                    'Criar Notificação'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

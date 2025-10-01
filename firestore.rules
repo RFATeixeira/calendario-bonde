@@ -46,6 +46,31 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
     
+    // Regras para a coleção de notificações
+    match /notifications/{notificationId} {
+      // Usuários podem ler suas próprias notificações
+      allow read: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // Usuários podem atualizar suas próprias notificações (marcar como lida)
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // Usuários podem deletar suas próprias notificações
+      allow delete: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      
+      // Administradores podem deletar qualquer notificação
+      allow delete: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      
+      // Apenas administradores podem criar notificações
+      allow create: if request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
     // Regras para configurações do sistema (apenas administradores)
     match /settings/{document} {
       allow read, write: if request.auth != null && 
