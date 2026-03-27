@@ -49,6 +49,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Nunca intercepta requisições não-GET (ex: auth/token).
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Evita interceptar chamadas externas (Google/Firebase/Auth), reduzindo riscos no login popup.
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // Estratégia: Network First para recursos dinâmicos
   if (shouldUseNetworkFirst(url)) {
     event.respondWith(networkFirst(request));

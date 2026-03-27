@@ -158,25 +158,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      if (typeof window !== 'undefined' && window.location.hostname === '0.0.0.0') {
+        throw new Error(
+          'Abra o app em http://localhost:3000 (não em 0.0.0.0) para usar login Google com popup.'
+        );
+      }
+
       console.log('🚀 Iniciando login com Google...');
       const result = await signInWithPopup(auth, googleProvider);
       console.log('✅ Login com Google bem-sucedido:', result.user.email);
     } catch (error: any) {
-      console.error('❌ Erro ao fazer login:', error);
+      const code = typeof error?.code === 'string' ? error.code : undefined;
+      const message = typeof error?.message === 'string' ? error.message : undefined;
+
+      console.warn('⚠️ Erro ao fazer login', {
+        code: code || 'sem-code',
+        message: message || 'sem-message',
+      });
       
       // Tratamento específico para diferentes tipos de erro
-      if (error.code === 'auth/popup-closed-by-user') {
+      if (code === 'auth/popup-closed-by-user') {
         console.log('🚫 Popup fechado pelo usuário');
         throw new Error('Login cancelado pelo usuário');
-      } else if (error.code === 'auth/popup-blocked') {
+      } else if (code === 'auth/popup-blocked') {
         console.log('🚫 Popup bloqueado pelo navegador');
         throw new Error('Popup bloqueado. Permita popups para este site e tente novamente.');
-      } else if (error.code === 'auth/unauthorized-domain') {
+      } else if (code === 'auth/unauthorized-domain') {
         console.log('🚫 Domínio não autorizado');
-        throw new Error('Domínio não autorizado. Contate o administrador.');
+        throw new Error('Domínio não autorizado no Firebase. Adicione este domínio em Authentication > Settings > Authorized domains.');
+      } else if (code === 'auth/cancelled-popup-request') {
+        console.log('🚫 Requisição de popup cancelada');
+        throw new Error('Tentativa de login interrompida. Aguarde e tente novamente.');
+      } else if (code === 'auth/network-request-failed') {
+        console.log('🚫 Falha de rede durante o login');
+        throw new Error('Falha de conexão durante o login. Verifique a internet e tente novamente.');
+      } else if (code === 'auth/operation-not-allowed') {
+        console.log('🚫 Provedor Google desabilitado no Firebase');
+        throw new Error('Login com Google não está habilitado no Firebase Authentication.');
+      } else if (code === 'auth/invalid-api-key') {
+        console.log('🚫 API key inválida');
+        throw new Error('Configuração inválida do Firebase (API key). Verifique as credenciais do projeto.');
+      } else if (code === 'auth/internal-error') {
+        console.log('⚠️ Internal error no popup');
+        throw new Error(
+          'Falha interna no popup de login. Verifique: 1) acesse por http://localhost:3000, 2) Google habilitado no Firebase Authentication, 3) domínio autorizado no Firebase, 4) bloqueadores/extensões desativados para este site.'
+        );
       } else {
-        console.log('🚫 Erro genérico:', error.code);
-        throw new Error('Erro ao fazer login. Tente novamente.');
+        console.log('🚫 Erro genérico:', code || 'desconhecido');
+        throw new Error(`Erro ao fazer login (${code || 'desconhecido'}). ${message || 'Tente novamente.'}`);
       }
     }
   };

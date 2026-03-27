@@ -12,9 +12,10 @@ export default function LoginComponent() {
     setLoading(true);
     try {
       await signInWithGoogle();
-    } catch (error) {
-      console.error('Erro no login:', error);
-      alert('Erro ao fazer login. Tente novamente.');
+    } catch (error: any) {
+      console.warn('Falha no login Google:', error?.message || error);
+      const message = error instanceof Error ? error.message : 'Erro ao fazer login. Tente novamente.';
+      alert(message);
     } finally {
       setLoading(false);
     }
@@ -28,7 +29,7 @@ export default function LoginComponent() {
             <img
               src="/icon/icon.png"
               alt="Calendário Bonde"
-              className="h-8 w-8 rounded-md object-cover"
+              className="h-16 w-16 rounded-md object-cover"
             />
           </div>
           <h2 className="text-3xl font-bold text-slate-100 mb-2">

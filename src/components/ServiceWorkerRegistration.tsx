@@ -8,53 +8,66 @@ export default function ServiceWorkerRegistration() {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((reg) => {
-            console.log('✅ SW: Registrado com sucesso');
-            setRegistration(reg);
+    if (!('serviceWorker' in navigator)) return;
 
-            // Verifica por atualizações a cada 30 segundos
-            const interval = setInterval(() => {
-              reg.update();
-            }, 30000);
+    // Em desenvolvimento, desativa SW para evitar interferência com login popup.
+    if (process.env.NODE_ENV === 'development') {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((reg) => reg.unregister());
+      });
+      return;
+    }
 
-            // Escuta por novos service workers
-            reg.addEventListener('updatefound', () => {
-              console.log('🔄 SW: Nova versão encontrada');
-              const newWorker = reg.installing;
-              
-              if (newWorker) {
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('📦 SW: Nova versão instalada, aguardando ativação');
-                    setUpdateAvailable(true);
-                  }
-                });
+    let interval: ReturnType<typeof setInterval> | undefined;
+
+    navigator.serviceWorker.register('/sw.js')
+      .then((reg) => {
+        console.log('✅ SW: Registrado com sucesso');
+        setRegistration(reg);
+
+        // Verifica por atualizações a cada 30 segundos
+        interval = setInterval(() => {
+          reg.update();
+        }, 30000);
+
+        // Escuta por novos service workers
+        reg.addEventListener('updatefound', () => {
+          console.log('🔄 SW: Nova versão encontrada');
+          const newWorker = reg.installing;
+
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                console.log('📦 SW: Nova versão instalada, aguardando ativação');
+                setUpdateAvailable(true);
               }
             });
-
-            return () => clearInterval(interval);
-          })
-          .catch((error) => {
-            console.error('❌ SW: Falha no registro:', error);
-          });
+          }
+        });
+      })
+      .catch((error) => {
+        console.error('❌ SW: Falha no registro:', error);
       });
 
-      // Escuta mudanças do service worker
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('🔄 SW: Controller mudou, recarregando página');
-        window.location.reload();
-      });
+    const onControllerChange = () => {
+      console.log('🔄 SW: Controller mudou, recarregando página');
+      window.location.reload();
+    };
 
-      // Escuta mensagens do service worker
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'VERSION_INFO') {
-          console.log(`📱 SW: Versão atual: ${event.data.version}`);
-        }
-      });
-    }
+    const onMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'VERSION_INFO') {
+        console.log(`📱 SW: Versão atual: ${event.data.version}`);
+      }
+    };
+
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange);
+    navigator.serviceWorker.addEventListener('message', onMessage);
+
+    return () => {
+      if (interval) clearInterval(interval);
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange);
+      navigator.serviceWorker.removeEventListener('message', onMessage);
+    };
   }, []);
 
   const handleUpdate = () => {
@@ -62,16 +75,6 @@ export default function ServiceWorkerRegistration() {
       console.log('💨 SW: Forçando atualização');
       registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       setUpdateAvailable(false);
-    }
-  };
-
-  const handleClearCache = () => {
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      console.log('🧹 SW: Limpando cache manualmente');
-      navigator.serviceWorker.controller.postMessage({ type: 'CLEAR_CACHE' });
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     }
   };
 
@@ -97,19 +100,6 @@ export default function ServiceWorkerRegistration() {
           </button>
         </div>
       </div>
-    );
-  }
-
-  // Botão de desenvolvimento para limpar cache (apenas em dev)
-  if (process.env.NODE_ENV === 'development') {
-    return (
-      <button
-        onClick={handleClearCache}
-        className="fixed bottom-4 right-4 bg-red-600 text-white p-2 rounded-full shadow-lg z-50"
-        title="Limpar Cache (Dev)"
-      >
-        🧹
-      </button>
     );
   }
 

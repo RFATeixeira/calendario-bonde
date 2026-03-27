@@ -8,7 +8,7 @@ export default function LoadingScreen() {
           <img
             src="/icon/icon.png"
             alt="Calendário Bonde"
-            className="h-8 w-8 rounded-md object-cover"
+            className="h-16 w-16 rounded-md object-cover"
           />
         </div>
         <div className="space-y-2">

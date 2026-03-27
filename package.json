@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -H 0.0.0.0",
+    "dev": "next dev",
+    "dev:lan": "next dev -H 0.0.0.0",
     "dev-local": "next dev",
     "build": "node scripts/update-sw-version.js && node scripts/check-env.js && next build",
     "build:netlify": "node scripts/update-sw-version.js && node scripts/deploy-netlify.js",

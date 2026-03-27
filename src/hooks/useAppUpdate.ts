@@ -19,6 +19,10 @@ export const useAppUpdate = () => {
       return;
     }
 
+    if (process.env.NODE_ENV === 'development') {
+      return;
+    }
+
     // Registra o service worker
     const registerSW = async () => {
       try {
