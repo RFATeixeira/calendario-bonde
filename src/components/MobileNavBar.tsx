@@ -11,40 +11,43 @@ import {
 } from 'lucide-react';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
+const NAVIGATE_DELAY_MS = 80;
+const TRANSITION_END_MS = 420;
+
+const navItems = [
+  {
+    icon: Home,
+    label: 'Home',
+    path: '/home'
+  },
+  {
+    icon: Bell,
+    label: 'Notificações',
+    path: '/notificacoes'
+  },
+  {
+    icon: Calendar,
+    label: 'Calendário',
+    path: '/'
+  },
+  {
+    icon: Settings,
+    label: 'Configurações',
+    path: '/configuracoes'
+  },
+  {
+    icon: User,
+    label: 'Perfil',
+    path: '/perfil'
+  }
+];
+
 const MobileNavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [activeIndex, setActiveIndex] = useState(2); // Calendário é o padrão (índice 2)
   const [isTransitioning, setIsTransitioning] = useState(false);
   const unreadCount = useUnreadNotifications();
-
-  const navItems = [
-    {
-      icon: Home,
-      label: 'Home',
-      path: '/home'
-    },
-    {
-      icon: Bell,
-      label: 'Notificações',
-      path: '/notificacoes'
-    },
-    {
-      icon: Calendar,
-      label: 'Calendário',
-      path: '/'
-    },
-    {
-      icon: Settings,
-      label: 'Configurações',
-      path: '/configuracoes'
-    },
-    {
-      icon: User,
-      label: 'Perfil',
-      path: '/perfil'
-    }
-  ];
 
   // Atualiza o índice ativo baseado na rota atual
   useEffect(() => {
@@ -57,30 +60,38 @@ const MobileNavBar = () => {
     }
   }, [pathname]);
 
+  // Prefetch de todas as rotas para reduzir tempo de troca entre abas.
+  useEffect(() => {
+    navItems.forEach((item) => {
+      router.prefetch(item.path);
+    });
+  }, [router]);
+
+  const prefetchPath = (path: string) => {
+    router.prefetch(path);
+  };
+
   const handleNavigation = (index: number, path: string) => {
-    if (index !== activeIndex) {
-      // Inicia estado de transição
-      setIsTransitioning(true);
-      
-      // Atualiza o índice ativo imediatamente para iniciar a animação horizontal
-      setActiveIndex(index);
-      
-      // Navega para a nova página após um pequeno delay
-      setTimeout(() => {
-        router.push(path);
-      }, 300);
-      
-      // Finaliza estado de transição
-      setTimeout(() => {
-        setIsTransitioning(false);
-      }, 600);
-    }
+    if (path === pathname || index === activeIndex) return;
+
+    setIsTransitioning(true);
+    setActiveIndex(index);
+
+    prefetchPath(path);
+
+    setTimeout(() => {
+      router.push(path);
+    }, NAVIGATE_DELAY_MS);
+
+    setTimeout(() => {
+      setIsTransitioning(false);
+    }, TRANSITION_END_MS);
   };
 
   return (
     <>
       {/* Mobile Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950 border-t border-slate-800 shadow-lg">
         {/* Container com altura total */}
         <div className="relative h-20">
           {/* Círculo azul que se move horizontalmente */}
@@ -92,7 +103,7 @@ const MobileNavBar = () => {
               width: '60px',
               height: '60px',
               top: '-16px',
-              border: '4px solid white',
+              border: '4px solid #0f172a',
               left: `calc(${activeIndex} * (100% / 5) + (100% / 10) - 30px)`,
               zIndex: 10,
               
@@ -113,6 +124,8 @@ const MobileNavBar = () => {
               <button
                 key={index}
                 onClick={() => handleNavigation(index, item.path)}
+                onMouseEnter={() => prefetchPath(item.path)}
+                onTouchStart={() => prefetchPath(item.path)}
                 className={`relative flex flex-col items-center justify-center transition-all duration-300 ease-out ${
                   isActive ? 'scale-105' : 'scale-100'
                 }`}
@@ -123,9 +136,9 @@ const MobileNavBar = () => {
                 aria-label={item.label}
               >
                 {/* Ícone */}
-                <div className={`relative z-30 transition-all duration-300 ease-out ${
-                  isActive ? 'text-white -top-6 scale-110' : 'text-gray-600 scale-100 hover:text-gray-800'
-                }`}>
+                  <div className={`relative z-30 transition-all duration-300 ease-out ${
+                    isActive ? 'text-white -top-6 scale-110' : 'text-slate-400 scale-100 hover:text-blue-300'
+                  }`}>
                   <IconComponent 
                     size={26} 
                     strokeWidth={isActive ? 2.5 : 2}
@@ -133,7 +146,7 @@ const MobileNavBar = () => {
                   
                   {/* Badge de notificações não lidas - apenas no ícone Bell */}
                   {item.icon === Bell && unreadCount > 0 && (
-                    <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg border-2 border-white">
+                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg border-2 border-slate-950">
                       {unreadCount <= 99 ? unreadCount : '99+'}
                     </div>
                   )}

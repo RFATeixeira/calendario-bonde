@@ -36,7 +36,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#eff6ff",
+  themeColor: "#020617",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -52,18 +52,18 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="apple-touch-icon" href="/icon/icon.png" />
+        <link rel="icon" type="image/png" href="/icon/icon.png" />
+        <link rel="shortcut icon" type="image/png" href="/icon/icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Calendário Bonde" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="msapplication-TileColor" content="#2563eb" />
+        <meta name="msapplication-TileColor" content="#020617" />
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-gray-100`}
+        className={`${geistSans.variable} ${geistMono.variable} dark antialiased min-h-screen`}
       >
         <AuthProvider>
           <LayoutWrapper>

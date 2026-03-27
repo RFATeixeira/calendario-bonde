@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { collection, query, where, orderBy, getDocs, updateDoc, doc, deleteDoc, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getCachedData, setCachedData } from '@/lib/clientCache';
 
 interface Notification {
   id: string;
@@ -16,6 +17,17 @@ interface Notification {
   read: boolean;
   userId: string;
 }
+
+const NOTIFICATIONS_CACHE_TTL_MS = 1000 * 60 * 2;
+
+const resolveDate = (value: any): Date | null => {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') return value.toDate();
+  if (typeof value?.seconds === 'number') return new Date(value.seconds * 1000);
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 const NotificacoesPage = () => {
   const { user, loading } = useAuth();
@@ -51,6 +63,13 @@ const NotificacoesPage = () => {
     const fetchNotifications = async () => {
       if (!user) return;
 
+      const cacheKey = `notificacoes:list:${user.uid}`;
+      const cachedNotifications = getCachedData<Notification[]>(cacheKey, NOTIFICATIONS_CACHE_TTL_MS);
+      if (cachedNotifications) {
+        setNotifications(cachedNotifications);
+        setLoadingNotifications(false);
+      }
+
       try {
         // Primeira tentativa com orderBy (requer índice)
         try {
@@ -67,6 +86,7 @@ const NotificacoesPage = () => {
           })) as Notification[];
 
           setNotifications(notificationsData);
+          setCachedData(cacheKey, notificationsData);
         } catch (indexError) {
           console.warn('Índice não disponível, usando query simples:', indexError);
           
@@ -84,16 +104,19 @@ const NotificacoesPage = () => {
 
           // Ordenar manualmente no cliente
           notificationsData = notificationsData.sort((a, b) => {
-            const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-            const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
+            const dateA = resolveDate(a.createdAt) || new Date(0);
+            const dateB = resolveDate(b.createdAt) || new Date(0);
             return dateB.getTime() - dateA.getTime();
           });
 
           setNotifications(notificationsData);
+          setCachedData(cacheKey, notificationsData);
         }
       } catch (error) {
         console.error('Erro ao buscar notificações:', error);
-        setNotifications([]); // Define como array vazio em caso de erro
+        if (!cachedNotifications) {
+          setNotifications([]); // Define como array vazio em caso de erro
+        }
       } finally {
         setLoadingNotifications(false);
       }
@@ -107,7 +130,7 @@ const NotificacoesPage = () => {
   const formatTimeAgo = (createdAt: any) => {
     if (!createdAt) return 'Agora';
     
-    const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+    const date = resolveDate(createdAt) || new Date();
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
@@ -134,7 +157,9 @@ const NotificacoesPage = () => {
         });
       }
 
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      const updatedNotifications = notifications.map(n => ({ ...n, read: true }));
+      setNotifications(updatedNotifications);
+      setCachedData(`notificacoes:list:${user.uid}`, updatedNotifications);
     } catch (error) {
       console.error('Erro ao marcar todas como lidas:', error);
     } finally {
@@ -153,6 +178,7 @@ const NotificacoesPage = () => {
       }
 
       setNotifications([]);
+      setCachedData(`notificacoes:list:${user.uid}`, []);
     } catch (error) {
       console.error('Erro ao limpar notificações:', error);
     } finally {
@@ -182,6 +208,7 @@ const NotificacoesPage = () => {
       
       // Limpar lista local
       setNotifications([]);
+      setCachedData(`notificacoes:list:${user.uid}`, []);
       
       alert(`✅ ${allNotificationsSnapshot.docs.length} notificações foram removidas do sistema.`);
     } catch (error) {
@@ -273,7 +300,7 @@ const NotificacoesPage = () => {
 
   if (loading || loadingNotifications) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     );
@@ -286,7 +313,7 @@ const NotificacoesPage = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950 p-4">
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-8 pt-8">
@@ -298,8 +325,8 @@ const NotificacoesPage = () => {
               </div>
             )}
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Notificações</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-2xl font-bold text-slate-100">Notificações</h1>
+          <p className="text-slate-300 mt-2">
             {unreadCount > 0 ? `${unreadCount} não lidas` : 'Todas lidas'}
           </p>
         </div>
@@ -336,7 +363,7 @@ const NotificacoesPage = () => {
               <button 
                 onClick={clearAllNotifications}
                 disabled={updatingNotifications}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
+                className="flex-1 bg-slate-800 hover:bg-slate-700 disabled:bg-slate-800 text-slate-200 font-medium py-2 px-4 rounded-xl transition-colors duration-200 text-sm"
               >
                 Limpar todas
               </button>
@@ -373,7 +400,7 @@ const NotificacoesPage = () => {
               return (
                 <div
                   key={notification.id}
-                  className={`relative bg-white/70 backdrop-blur-sm rounded-2xl p-4 border border-white/50 shadow-sm transition-all duration-200 hover:shadow-md ${
+                  className={`relative bg-slate-900/80 backdrop-blur-sm rounded-2xl p-4 border border-slate-700 shadow-sm transition-all duration-200 hover:shadow-md ${
                     !notification.read ? 'ring-2 ring-blue-200' : ''
                   }`}
                 >
@@ -384,7 +411,7 @@ const NotificacoesPage = () => {
 
                   <div className="flex items-start space-x-3">
                     {/* Ícone */}
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getColorClasses(notification.type, notification.read)}`}>
+                    <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${getColorClasses(notification.type, notification.read)}`}>
                       <IconComponent className="w-5 h-5" />
                     </div>
 
@@ -392,19 +419,19 @@ const NotificacoesPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className={`text-sm font-medium truncate ${
-                          !notification.read ? 'text-gray-900' : 'text-gray-700'
+                          !notification.read ? 'text-slate-100' : 'text-slate-300'
                         }`}>
                           {notification.title}
                         </h3>
                       </div>
                       
                       <p className={`text-sm mt-1 ${
-                        !notification.read ? 'text-gray-700' : 'text-gray-600'
+                        !notification.read ? 'text-slate-300' : 'text-slate-400'
                       }`}>
                         {notification.message}
                       </p>
                       
-                      <p className="text-xs text-gray-500 mt-2">
+                      <p className="text-xs text-slate-500 mt-2">
                         {formatTimeAgo(notification.createdAt)}
                       </p>
                     </div>
@@ -414,21 +441,21 @@ const NotificacoesPage = () => {
             })}
           </div>
         ) : (
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 border border-white/50 shadow-sm text-center">
-            <Bell className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-800 mb-2">Nenhuma notificação</h3>
-            <p className="text-gray-600">Você não tem notificações no momento.</p>
+          <div className="bg-slate-900/80 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 shadow-sm text-center">
+            <Bell className="w-12 h-12 text-slate-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-100 mb-2">Nenhuma notificação</h3>
+            <p className="text-slate-400">Você não tem notificações no momento.</p>
           </div>
         )}
 
         {/* Empty State (caso não tenha notificações) */}
         {notifications.length === 0 && (
           <div className="text-center py-12">
-            <Bell className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-500 mb-2">
+            <Bell className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-slate-400 mb-2">
               Nenhuma notificação
             </h3>
-            <p className="text-gray-400">
+            <p className="text-slate-500">
               Você está em dia com tudo!
             </p>
           </div>
@@ -438,27 +465,27 @@ const NotificacoesPage = () => {
       {/* Admin Modal for Creating Notifications */}
       {showAdminModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+          <div className="bg-slate-900 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto border border-slate-700">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-gray-800">Criar Notificação</h2>
+              <h2 className="text-xl font-bold text-slate-100">Criar Notificação</h2>
               <button 
                 onClick={() => setShowAdminModal(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-800 transition-colors"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-slate-400" />
               </button>
             </div>
 
             <form onSubmit={handleAdminFormSubmit} className="space-y-4">
               {/* Notification Type */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Tipo de Notificação
                 </label>
                 <select 
                   value={adminForm.type}
                   onChange={(e) => handleAdminFormChange('type', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="sistema">Sistema</option>
                   <option value="evento">Evento</option>
@@ -468,7 +495,7 @@ const NotificacoesPage = () => {
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Título
                 </label>
                 <input 
@@ -476,13 +503,13 @@ const NotificacoesPage = () => {
                   value={adminForm.title}
                   onChange={(e) => handleAdminFormChange('title', e.target.value)}
                   placeholder="Digite o título da notificação"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               {/* Message */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Mensagem
                 </label>
                 <textarea 
@@ -490,19 +517,19 @@ const NotificacoesPage = () => {
                   onChange={(e) => handleAdminFormChange('message', e.target.value)}
                   placeholder="Digite a mensagem da notificação"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
               </div>
 
               {/* Target Users */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Destinatários
                 </label>
                 <select 
                   value={adminForm.targetType}
                   onChange={(e) => handleAdminFormChange('targetType', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">Todos os usuários</option>
                   <option value="specific">Usuários específicos</option>
@@ -514,7 +541,7 @@ const NotificacoesPage = () => {
                 <button 
                   type="button"
                   onClick={() => setShowAdminModal(false)}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2 px-4 rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>

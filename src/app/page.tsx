@@ -265,13 +265,13 @@ export default function Home() {
     <>
       <ServiceWorkerRegistration />
       <UpdateNotification />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-24">
+      <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950 pb-24">
         <Header />
         
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           {eventsLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
             </div>
           ) : (
             <>

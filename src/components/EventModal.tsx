@@ -89,16 +89,16 @@ export default function EventModal({
   const userHasEventOnDate = existingEvents.some(event => event.userId === user?.uid);
 
   return (
-    <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-gray-200">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-900 rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto border border-slate-700">
+        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+          <h3 className="text-lg font-semibold text-slate-100 flex items-center">
             <Calendar className="h-5 w-5 mr-2 text-blue-600" />
             {format(selectedDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+            className="text-slate-400 hover:text-slate-200 transition-colors duration-200"
           >
             <X className="h-6 w-6" />
           </button>
@@ -108,7 +108,7 @@ export default function EventModal({
           {/* Eventos existentes */}
           {existingEvents.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-3">
+              <h4 className="text-sm font-medium text-slate-300 mb-3">
                 Agendamentos existentes
               </h4>
               <div className="space-y-2">
@@ -118,8 +118,8 @@ export default function EventModal({
                     className={`
                       flex items-center justify-between p-3 rounded-lg border
                       ${event.userId === user?.uid 
-                        ? 'bg-green-50 border-green-200' 
-                        : 'bg-blue-50 border-blue-200'
+                        ? 'bg-blue-500/10 border-blue-500/30' 
+                        : 'bg-slate-800 border-slate-700'
                       }
                     `}
                   >
@@ -131,16 +131,16 @@ export default function EventModal({
                           className="h-8 w-8 rounded-full"
                         />
                       ) : (
-                        <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center">
-                          <User className="h-4 w-4 text-gray-600" />
+                        <div className="h-8 w-8 bg-slate-700 rounded-full flex items-center justify-center">
+                          <User className="h-4 w-4 text-slate-300" />
                         </div>
                       )}
                       <div>
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-slate-100">
                           {event.userName}
                         </p>
                         {event.title && (
-                          <p className="text-xs text-gray-600">{event.title}</p>
+                          <p className="text-xs text-slate-400">{event.title}</p>
                         )}
                       </div>
                     </div>
@@ -168,12 +168,12 @@ export default function EventModal({
           {/* Formulário para novo evento */}
           {(!userHasEventOnDate || user?.isAdmin) && (
             <form onSubmit={handleSubmit} className="space-y-4">
-              <h4 className="text-sm font-medium text-gray-700">
+              <h4 className="text-sm font-medium text-slate-300">
                 Novo agendamento
               </h4>
               
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="title" className="block text-sm font-medium text-slate-300 mb-1">
                   Título (opcional)
                 </label>
                 <input
@@ -182,20 +182,20 @@ export default function EventModal({
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Ex: Reunião, Consulta, etc."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-500"
+                  className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-800 text-slate-100 placeholder-slate-500"
                 />
               </div>
 
               {user?.isAdmin && (
                 <div>
-                  <label htmlFor="user" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="user" className="block text-sm font-medium text-slate-300 mb-1">
                     Usuário
                   </label>
                   <select
                     id="user"
                     value={selectedUserId}
                     onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
+                    className="w-full px-3 py-2 border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-slate-800 text-slate-100"
                     required
                   >
                     <option value="">Selecione um usuário</option>
@@ -226,8 +226,8 @@ export default function EventModal({
           )}
 
           {userHasEventOnDate && !user?.isAdmin && (
-            <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
+            <div className="text-center p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p className="text-sm text-blue-200">
                 Você já tem um agendamento nesta data.
               </p>
             </div>

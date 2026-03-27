@@ -105,10 +105,10 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
   if (uniqueUsers.length === 0) return null;
 
   return (
-    <div className="mt-6 bg-white rounded-2xl shadow-xl border border-gray-200 p-6 glass-card">
+    <div className="mt-6 bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6 glass-card">
       <div className="flex items-center space-x-2 mb-4">
-        <Users className="h-5 w-5 text-gray-700" />
-        <h3 className="text-lg font-semibold text-gray-900">
+        <Users className="h-5 w-5 text-blue-300" />
+        <h3 className="text-lg font-semibold text-slate-100">
           Usuários - {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
         </h3>
       </div>
@@ -124,8 +124,8 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
               className={`
                 flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 hover:scale-105
                 ${isCurrentUser 
-                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200' 
-                  : 'bg-gray-50 hover:bg-gray-100'
+                  ? 'bg-linear-to-r from-blue-500/15 to-blue-700/10 border border-blue-500/40' 
+                  : 'bg-slate-800/80 hover:bg-slate-800 border border-slate-700'
                 }
               `}
             >
@@ -145,20 +145,20 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
                 <p className={`
                   text-sm font-medium truncate
                   ${isCurrentUser 
-                    ? 'text-blue-700' 
-                    : 'text-gray-900'
+                    ? 'text-blue-300' 
+                    : 'text-slate-100'
                   }
                 `}>
                   {isCurrentUser ? 'Você' : user.userName}
                 </p>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-slate-400">
                   {eventCount} {eventCount === 1 ? 'agendamento' : 'agendamentos'}
                 </p>
               </div>
 
               {/* Badge de admin se for o caso */}
               {user.userId === currentUser.uid && currentUser.isAdmin && (
-                <div className="px-2 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-medium rounded-full">
+                <div className="px-2 py-1 bg-linear-to-r from-blue-500 to-blue-700 text-white text-xs font-medium rounded-full">
                   Admin
                 </div>
               )}
@@ -168,8 +168,8 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
       </div>
 
       {/* Resumo */}
-      <div className="mt-4 pt-4 border-t border-gray-200">
-        <div className="flex items-center justify-between text-sm font-medium text-gray-700">
+      <div className="mt-4 pt-4 border-t border-slate-700">
+        <div className="flex items-center justify-between text-sm font-medium text-slate-300">
           <span>{uniqueUsers.length} {uniqueUsers.length === 1 ? 'usuário' : 'usuários'}</span>
           <span>{currentMonthEvents.length} {currentMonthEvents.length === 1 ? 'agendamento' : 'agendamentos'} em {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}</span>
         </div>

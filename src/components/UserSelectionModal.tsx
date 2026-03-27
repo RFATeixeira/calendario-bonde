@@ -70,24 +70,24 @@ export default function UserSelectionModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-white/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden border border-gray-200">
+    <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-hidden border border-slate-700">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+          <h2 className="text-xl font-semibold text-slate-100">
             Selecionar Usuário
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors duration-200"
           >
-            <X className="h-5 w-5 text-gray-600" />
+            <X className="h-5 w-5 text-slate-400" />
           </button>
         </div>
 
         {/* Content */}
         <div className="p-6">
-          <p className="text-sm text-gray-700 mb-4">
+          <p className="text-sm text-slate-300 mb-4">
             Selecione o usuário para quem deseja definir este dia:
           </p>
 
@@ -101,10 +101,10 @@ export default function UserSelectionModal({
                 <button
                   key={user.uid}
                   onClick={() => handleUserSelect(user)}
-                  className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 text-left"
+                  className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-800 transition-colors duration-200 text-left"
                 >
                   {/* Avatar do usuário */}
-                  <div className="flex-shrink-0">
+                  <div className="shrink-0">
                     {user.photoURL ? (
                       <img
                         src={user.photoURL}
@@ -124,7 +124,7 @@ export default function UserSelectionModal({
                   {/* Informações do usuário */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-medium text-slate-100 truncate">
                         {user.displayName}
                       </p>
                       {user.isAdmin && (
@@ -138,7 +138,7 @@ export default function UserSelectionModal({
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-600 truncate">
+                    <p className="text-xs text-slate-400 truncate">
                       {user.email}
                     </p>
                   </div>
@@ -149,10 +149,10 @@ export default function UserSelectionModal({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200">
+        <div className="px-6 py-4 border-t border-slate-700">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+            className="w-full px-4 py-2 text-sm font-medium text-slate-200 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors duration-200"
           >
             Cancelar
           </button>

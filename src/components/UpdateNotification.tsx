@@ -12,10 +12,10 @@ export default function UpdateNotification() {
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-linear-to-r from-blue-600 to-blue-700 text-white shadow-lg">
       <div className="max-w-md mx-auto p-4">
         <div className="flex items-center space-x-3">
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Download className="w-6 h-6 animate-bounce" />
           </div>
           

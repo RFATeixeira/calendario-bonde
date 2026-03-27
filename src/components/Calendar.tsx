@@ -89,18 +89,18 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
       <div className="flex items-center justify-center mb-6">
         <button
           onClick={prevMonth}
-          className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110"
+          className="p-2 hover:bg-slate-800 rounded-xl transition-all duration-200 hover:scale-110"
         >
-          <ChevronLeft className="h-5 w-5 text-gray-700" />
+          <ChevronLeft className="h-5 w-5 text-slate-300" />
         </button>
-        <h2 className="text-2xl font-bold text-gray-900 mx-6">
+        <h2 className="text-2xl font-bold text-slate-100 mx-6">
           {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
         </h2>
         <button
           onClick={nextMonth}
-          className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-110"
+          className="p-2 hover:bg-slate-800 rounded-xl transition-all duration-200 hover:scale-110"
         >
-          <ChevronRight className="h-5 w-5 text-gray-700" />
+          <ChevronRight className="h-5 w-5 text-slate-300" />
         </button>
       </div>
     );
@@ -112,7 +112,7 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
     return (
       <div className="grid grid-cols-7 gap-2 mb-4">
         {daysOfWeek.map(day => (
-          <div key={day} className="p-3 text-center text-sm font-semibold text-gray-700 bg-gray-100 rounded-lg">
+          <div key={day} className="p-3 text-center text-sm font-semibold text-slate-300 bg-slate-800 rounded-lg border border-slate-700">
             {day}
           </div>
         ))}
@@ -163,19 +163,19 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
             className={`
               relative min-h-[100px] p-3 border cursor-pointer calendar-cell transition-all duration-200
               ${!isCurrentMonth 
-                ? 'bg-gray-100 text-gray-500 border-gray-200' 
-                : 'bg-white text-gray-900 border-gray-300'
+                ? 'bg-slate-900/70 text-slate-500 border-slate-800' 
+                : 'bg-slate-900 text-slate-100 border-slate-700'
               }
-              ${isTodayDate ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-300' : ''}
-              ${hasUserEvent ? 'ring-2 ring-blue-200 border-blue-300' : ''}
-              hover:bg-gray-100 hover:scale-105 active:scale-95
+              ${isTodayDate ? 'bg-linear-to-br from-blue-950/60 to-slate-900 border-blue-400' : ''}
+              ${hasUserEvent ? 'ring-2 ring-blue-500/40 border-blue-500' : ''}
+              hover:bg-slate-800 hover:scale-105 active:scale-95
             `}
             onClick={() => handleDateClick(cloneDay)}
           >
             <div className="flex items-center justify-between mb-1">
               <span className={`
                 text-sm font-medium
-                ${isTodayDate ? 'text-blue-600 font-bold' : ''}
+                ${isTodayDate ? 'text-blue-300 font-bold' : 'text-slate-200'}
               `}>
                 {format(day, 'd')}
               </span>
@@ -213,7 +213,7 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 glass-card">
+    <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6 glass-card">
       {renderHeader()}
       {renderDaysOfWeek()}
       {renderCells()}

@@ -105,19 +105,19 @@ export default function ConfiguracoesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-slate-950/80 shadow-sm border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => router.back()}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors duration-200"
               >
-                <ArrowLeft className="h-5 w-5 text-gray-700" />
+                <ArrowLeft className="h-5 w-5 text-slate-300" />
               </button>
-              <h1 className="text-xl font-semibold text-gray-900">
+              <h1 className="text-xl font-semibold text-slate-100">
                 Configurações
               </h1>
             </div>
@@ -129,8 +129,8 @@ export default function ConfiguracoesPage() {
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Perfil do usuário */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6">
+            <h2 className="text-lg font-semibold text-slate-100 mb-4">
               Informações do Perfil
             </h2>
             
@@ -159,8 +159,8 @@ export default function ConfiguracoesPage() {
                 </div>
               )}
               <div>
-                <h3 className="text-lg font-medium text-gray-900">{user.displayName}</h3>
-                <p className="text-sm text-gray-600">{user.email}</p>
+                <h3 className="text-lg font-medium text-slate-100">{user.displayName}</h3>
+                <p className="text-sm text-slate-400">{user.email}</p>
                 {user.isAdmin && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-1">
                     Administrador
@@ -170,13 +170,13 @@ export default function ConfiguracoesPage() {
             </div>
 
             {/* Editar Nome */}
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-md font-medium text-gray-900 mb-3">
+            <div className="border-t border-slate-700 pt-6">
+              <h3 className="text-md font-medium text-slate-100 mb-3">
                 Editar Nome de Exibição
               </h3>
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="displayName" className="block text-sm font-medium text-slate-300 mb-2">
                     Nome completo
                   </label>
                   <input
@@ -184,11 +184,11 @@ export default function ConfiguracoesPage() {
                     id="displayName"
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                    className="w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
                     placeholder="Digite seu nome completo"
                     maxLength={50}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-slate-400 mt-1">
                     Este nome será exibido em todo o aplicativo
                   </p>
                 </div>
@@ -196,7 +196,7 @@ export default function ConfiguracoesPage() {
                 <button
                   onClick={handleSaveName}
                   disabled={savingName || !displayName.trim() || displayName === user.displayName}
-                  className="flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-medium rounded-xl transition-colors duration-200"
+                  className="flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-600 text-white font-medium rounded-xl transition-colors duration-200"
                 >
                   {savingName ? (
                     <>
@@ -215,14 +215,14 @@ export default function ConfiguracoesPage() {
           </div>
 
           {/* Configuração da letra */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6">
+            <h2 className="text-lg font-semibold text-slate-100 mb-4">
               Personalização do Avatar
             </h2>
             
             <div className="space-y-4">
               <div>
-                <label htmlFor="customLetter" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="customLetter" className="block text-sm font-medium text-slate-300 mb-2">
                   Letra exibida no calendário
                 </label>
                 <div className="flex items-center space-x-4">
@@ -244,10 +244,10 @@ export default function ConfiguracoesPage() {
                       value={customLetter}
                       onChange={handleLetterChange}
                       maxLength={1}
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg font-bold uppercase"
+                      className="block w-full px-3 py-2 border border-slate-600 bg-slate-800 text-slate-100 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-center text-lg font-bold uppercase"
                       placeholder="A"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-slate-400 mt-1">
                       Digite apenas uma letra para representar você no calendário
                     </p>
                   </div>
@@ -275,8 +275,8 @@ export default function ConfiguracoesPage() {
           </div>
 
           {/* Ações da conta */}
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6">
+            <h2 className="text-lg font-semibold text-slate-100 mb-4">
               Ações da Conta
             </h2>
             

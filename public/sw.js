@@ -9,8 +9,7 @@ const staticAssets = [
   '/',
   '/offline',
   '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png'
+  '/icon/icon.png'
 ];
 
 // URLs que devem sempre buscar na rede primeiro
@@ -76,7 +75,7 @@ function shouldUseNetworkFirst(url) {
 
 // Determina se deve usar Cache First
 function shouldUseCacheFirst(url) {
-  return url.pathname.startsWith('/icons/') ||
+  return url.pathname.startsWith('/icon/') ||
          url.pathname.startsWith('/_next/static/') ||
          url.pathname.endsWith('.png') ||
          url.pathname.endsWith('.jpg') ||
