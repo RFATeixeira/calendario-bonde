@@ -40,7 +40,8 @@ const LayoutWrapper: React.FC<LayoutWrapperProps> = ({ children }) => {
         pullProgress={pullProgress}
       />
       {children}
-      {user && <MobileNavBar />}
+      {/* MobileNavBar habilitada */}
+      <MobileNavBar />
     </div>
   );
 };

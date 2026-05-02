@@ -13,6 +13,7 @@ interface UserData {
   photoURL?: string;
   isAdmin: boolean;
   customLetter?: string;
+  color?: string;
 }
 
 interface UserSelectionModalProps {
@@ -114,7 +115,7 @@ export default function UserSelectionModal({
                     ) : (
                       <div className={`
                         h-10 w-10 rounded-full flex items-center justify-center text-white font-bold text-sm
-                        ${getUserColor(user.uid)}
+                        ${getUserColor(user.uid, (user as any).color)}
                       `}>
                         {user.customLetter || user.displayName.charAt(0).toUpperCase()}
                       </div>

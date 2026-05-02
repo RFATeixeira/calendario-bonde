@@ -5,17 +5,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { X, Calendar, User, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-
-interface CalendarEvent {
-  id: string;
-  date: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  title?: string;
-  createdAt: Date;
-}
-
+import type { CalendarEvent } from '@/types';
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;

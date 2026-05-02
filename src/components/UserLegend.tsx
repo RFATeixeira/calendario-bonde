@@ -4,21 +4,10 @@ import { getUserColor } from '@/lib/userColors';
 import { Users } from 'lucide-react';
 import { startOfMonth, endOfMonth, parseISO, isWithinInterval, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-interface CalendarEvent {
-  id: string;
-  date: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  title?: string;
-  createdAt: Date;
-  customLetter?: string;
-}
-
+import type { CalendarEvent, UserMapValue } from '@/types';
 interface UserLegendProps {
   events: CalendarEvent[];
-  usersMap?: Map<string, { customLetter?: string; displayName: string }>;
+  usersMap?: Map<string, UserMapValue>;
   currentMonth: Date;
   currentUser: {
     uid: string;
@@ -26,6 +15,7 @@ interface UserLegendProps {
     photoURL?: string;
     isAdmin: boolean;
     customLetter?: string;
+    color?: string;
   };
 }
 
@@ -50,7 +40,8 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
     if (userId === currentUser.uid) {
       return {
         userName: currentUser.displayName,
-        customLetter: currentUser.customLetter
+        customLetter: currentUser.customLetter,
+        color: currentUser.color
       };
     }
     
@@ -59,14 +50,16 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
       const userData = usersMap.get(userId);
       return {
         userName: userData?.displayName || eventUserName,
-        customLetter: userData?.customLetter
+        customLetter: userData?.customLetter,
+        color: userData?.color
       };
     }
     
     // 3. Fallback: usa os dados salvos no evento
     return {
       userName: eventUserName,
-      customLetter: eventCustomLetter
+      customLetter: eventCustomLetter,
+      color: undefined
     };
   };
 
@@ -75,14 +68,15 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
     if (!users.find(user => user.userId === event.userId)) {
       const currentData = getCurrentUserData(event.userId, event.userName, event.customLetter);
       users.push({
-        userId: event.userId,
-        userName: currentData.userName,
-        userPhoto: event.userPhoto,
-        customLetter: currentData.customLetter
-      });
+          userId: event.userId,
+          userName: currentData.userName,
+          userPhoto: event.userPhoto,
+          customLetter: currentData.customLetter,
+          color: currentData.color
+        });
     }
     return users;
-  }, [] as Array<{userId: string, userName: string, userPhoto?: string, customLetter?: string}>);
+  }, [] as Array<{userId: string, userName: string, userPhoto?: string, customLetter?: string, color?: string}>);
 
   // Adicionar o usuário atual se ele não estiver na lista
   if (!uniqueUsers.find(user => user.userId === currentUser.uid)) {
@@ -91,7 +85,8 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
       userId: currentUser.uid,
       userName: currentData.userName,
       userPhoto: currentUser.photoURL,
-      customLetter: currentData.customLetter
+      customLetter: currentData.customLetter,
+      color: currentData.color
     });
   }
 
@@ -119,7 +114,7 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
           const isCurrentUser = user.userId === currentUser.uid;
           
           return (
-            <div
+                <div
               key={user.userId}
               className={`
                 flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 hover:scale-105
@@ -129,15 +124,30 @@ export default function UserLegend({ events, usersMap, currentMonth, currentUser
                 }
               `}
             >
-              {/* Avatar com cor única do usuário */}
+              {/* Avatar com cor única do usuário; mostra foto quando disponível com fallback por baixo */}
               <div
                 className={`
-                  w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm user-avatar shadow-lg
-                  ${getUserColor(user.userId)}
+                  w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm user-avatar shadow-lg overflow-hidden relative
                 `}
                 title={user.userName}
               >
-                {user.customLetter || user.userName.charAt(0).toUpperCase()}
+                <div className={`absolute inset-0 flex items-center justify-center ${getUserColor(user.userId, (user as any).color)}`}>
+                  {user.customLetter || user.userName.charAt(0).toUpperCase()}
+                </div>
+                {user.userPhoto && (
+                  <img
+                    src={user.userPhoto}
+                    alt={user.userName}
+                    className="absolute inset-0 w-full h-full object-cover rounded-full"
+                    crossOrigin="anonymous"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const t = e.currentTarget as HTMLImageElement;
+                      t.style.display = 'none';
+                    }}
+                  />
+                )}
               </div>
 
               {/* Informações do usuário */}

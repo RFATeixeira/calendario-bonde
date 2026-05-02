@@ -1,5 +1,5 @@
 // Versão do cache - ATUALIZE ESTE NÚMERO A CADA DEPLOY!
-const CACHE_VERSION = '2025-09-30-1304'; // YYYY-MM-DD-vX
+const CACHE_VERSION = '2026-05-01-2043'; // YYYY-MM-DD-vX
 const CACHE_NAME = `calendario-bonde-${CACHE_VERSION}`;
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
@@ -7,7 +7,6 @@ const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 // URLs para cache estático (sempre em cache)
 const staticAssets = [
   '/',
-  '/offline',
   '/manifest.json',
   '/icon/icon.png'
 ];
@@ -16,10 +15,7 @@ const staticAssets = [
 const networkFirstUrls = [
   '/api/',
   '/_next/static/',
-  '/home',
-  '/perfil',
-  '/configuracoes',
-  '/notificacoes'
+  '/configuracoes'
 ];
 
 // Instalar o service worker

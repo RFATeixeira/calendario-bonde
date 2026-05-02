@@ -9,6 +9,7 @@ export default function Header() {
   const { user, logout, isAdminMode, toggleAdminMode } = useAuth();
   const router = useRouter();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -19,9 +20,10 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-slate-950/80 backdrop-blur-md shadow-sm border-b border-slate-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
+    <header className="sticky top-0 z-50 px-3 py-3 sm:px-6 sm:py-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white/5 backdrop-blur-2xl rounded-full border border-white/20 shadow-2xl px-6 sm:px-8 py-3 sm:py-4">
+          <div className="flex justify-between items-center h-12 sm:h-14">
           {/* Logo e título */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center">
@@ -63,31 +65,30 @@ export default function Header() {
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="flex items-center space-x-2 sm:space-x-3 p-1.5 sm:p-2 rounded-lg hover:bg-slate-800 transition-colors duration-200"
             >
-              {user?.photoURL ? (
+              {user?.photoURL && !imgError ? (
                 <img
                   src={user.photoURL}
                   alt={user.displayName}
                   className="h-7 w-7 sm:h-8 sm:w-8 rounded-full object-cover"
-                  onError={(e) => {
-                    // Se a imagem falhar ao carregar, esconder e mostrar fallback
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent && !parent.querySelector('.header-fallback')) {
-                      const fallbackDiv = document.createElement('div');
-                      fallbackDiv.className = 'header-fallback h-7 w-7 sm:h-8 sm:w-8 bg-gray-300 rounded-full flex items-center justify-center';
-                      fallbackDiv.innerHTML = '<svg class="h-3.5 w-3.5 sm:h-4 sm:w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
-                      parent.appendChild(fallbackDiv);
-                    }
-                  }}
+                  crossOrigin="anonymous"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={() => setImgError(true)}
                 />
               ) : (
-                <div className="h-7 w-7 sm:h-8 sm:w-8 bg-slate-700 rounded-full flex items-center justify-center">
-                  <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-300" />
+                <div className="h-7 w-7 sm:h-8 sm:w-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                  {user?.displayName?.charAt(0).toUpperCase() || 'U'}
                 </div>
               )}
-                <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-slate-100">
+                  <div className="hidden sm:block text-left">
+                  <p
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDropdown(false);
+                      // perfil removido: não navegar
+                    }}
+                    className="text-sm font-medium text-slate-100 cursor-pointer"
+                  >
                     {user?.displayName}
                   </p>
                   {user?.isAdmin && (
@@ -101,13 +102,32 @@ export default function Header() {
               {/* Dropdown menu */}
               {showDropdown && (
                 <div className="absolute right-0 mt-2 w-48 bg-slate-900 rounded-xl shadow-lg border border-slate-700 py-2 z-50 glass-card">
-                  <div className="px-4 py-2 border-b border-slate-700">
+                  <div
+                    className="px-4 py-2 border-b border-slate-700 cursor-default"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      // perfil removido: não navegar
+                    }}
+                  >
                     <p className="text-sm font-medium text-slate-100">
                       {user?.displayName}
                     </p>
                     <p className="text-xs text-slate-400">{user?.email}</p>
                   </div>
                   
+                  {user?.isAdmin && (
+                    <button
+                      onClick={() => {
+                        setShowDropdown(false);
+                        router.push('/admin');
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-slate-200 hover:bg-slate-800 flex items-center space-x-2 transition-colors duration-200"
+                    >
+                      <Shield className="h-4 w-4" />
+                      <span>Administração</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       setShowDropdown(false);
@@ -131,6 +151,7 @@ export default function Header() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </header>
   );

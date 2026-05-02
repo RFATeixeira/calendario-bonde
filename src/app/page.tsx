@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { CalendarEvent, UserMapValue } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   collection, 
@@ -25,16 +26,7 @@ import UserSelectionModal from '@/components/UserSelectionModal';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import UpdateNotification from '@/components/UpdateNotification';
 
-interface CalendarEvent {
-  id: string;
-  date: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  title?: string;
-  createdAt: Date;
-  customLetter?: string;
-}
+
 
 export default function Home() {
   const { user, loading, isAdminMode } = useAuth();
@@ -42,7 +34,7 @@ export default function Home() {
   const [eventsLoading, setEventsLoading] = useState(true);
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [usersMap, setUsersMap] = useState<Map<string, { customLetter?: string; displayName: string }>>(new Map());
+  const [usersMap, setUsersMap] = useState<Map<string, UserMapValue>>(new Map());
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // Função para carregar informações atuais dos usuários
@@ -60,7 +52,8 @@ export default function Home() {
             const userData = userDoc.data();
             newUsersMap.set(userId, {
               customLetter: userData.customLetter,
-              displayName: userData.displayName || userData.email?.split('@')[0] || 'Usuário'
+              displayName: userData.displayName || userData.email?.split('@')[0] || 'Usuário',
+              color: userData.color
             });
           }
         } catch (error) {
@@ -98,7 +91,8 @@ export default function Home() {
           userPhoto: data.userPhoto,
           title: data.title,
           createdAt: data.createdAt.toDate(),
-          customLetter: data.customLetter,
+            customLetter: data.customLetter,
+            color: data.color,
         });
         userIds.push(data.userId);
       });
@@ -137,7 +131,8 @@ export default function Home() {
           userPhoto: data.userPhoto,
           title: data.title,
           createdAt: data.createdAt.toDate(),
-          customLetter: data.customLetter,
+            customLetter: data.customLetter,
+            color: data.color,
         });
         userIds.push(data.userId);
       });
@@ -190,11 +185,11 @@ export default function Home() {
           date: dateStr,
           userId: user.uid,
           userName: user.displayName,
-          userPhoto: user.photoURL || null,
+          userPhoto: user.photoURL,
           title: null,
           createdAt: new Date(),
           createdBy: user.uid,
-          customLetter: user.customLetter || null,
+          customLetter: user.customLetter,
         });
       } catch (error) {
         console.error('Erro ao criar evento:', error);
@@ -230,11 +225,12 @@ export default function Home() {
           date: dateStr,
           userId: userId,
           userName: userData?.displayName || userName,
-          userPhoto: userData?.photoURL || null,
+          userPhoto: userData?.photoURL,
           title: null,
           createdAt: new Date(),
           createdBy: user.uid, // Quem criou foi o admin
-          customLetter: userData?.customLetter || null,
+          customLetter: userData?.customLetter,
+          color: userData?.color,
         });
       } catch (error) {
         console.error('Erro ao criar evento:', error);

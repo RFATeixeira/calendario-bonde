@@ -2,29 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { 
-  Home, 
-  Bell, 
-  Calendar, 
-  Settings, 
-  User 
-} from 'lucide-react';
+import { Calendar, Settings } from 'lucide-react';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
 const NAVIGATE_DELAY_MS = 80;
 const TRANSITION_END_MS = 420;
 
 const navItems = [
-  {
-    icon: Home,
-    label: 'Home',
-    path: '/home'
-  },
-  {
-    icon: Bell,
-    label: 'Notificações',
-    path: '/notificacoes'
-  },
   {
     icon: Calendar,
     label: 'Calendário',
@@ -34,36 +18,28 @@ const navItems = [
     icon: Settings,
     label: 'Configurações',
     path: '/configuracoes'
-  },
-  {
-    icon: User,
-    label: 'Perfil',
-    path: '/perfil'
   }
 ];
 
 const MobileNavBar = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const [activeIndex, setActiveIndex] = useState(2); // Calendário é o padrão (índice 2)
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const unreadCount = useUnreadNotifications();
 
   // Atualiza o índice ativo baseado na rota atual
   useEffect(() => {
     const currentIndex = navItems.findIndex(item => item.path === pathname);
-    if (currentIndex !== -1) {
-      setActiveIndex(currentIndex);
-    } else if (pathname === '/') {
-      // Se estiver na página inicial, define o calendário como ativo (índice 2)
-      setActiveIndex(2);
-    }
+    if (currentIndex !== -1) setActiveIndex(currentIndex);
   }, [pathname]);
 
-  // Prefetch de todas as rotas para reduzir tempo de troca entre abas.
+  // Prefetch apenas das rotas ativas (calendar e configuracoes)
   useEffect(() => {
     navItems.forEach((item) => {
-      router.prefetch(item.path);
+      if (item.path === '/' || item.path === '/configuracoes') {
+        router.prefetch(item.path);
+      }
     });
   }, [router]);
 
@@ -72,6 +48,8 @@ const MobileNavBar = () => {
   };
 
   const handleNavigation = (index: number, path: string) => {
+    // Só permite navegação para rota principal ('/') e configurações
+    if (path !== '/' && path !== '/configuracoes') return;
     if (path === pathname || index === activeIndex) return;
 
     setIsTransitioning(true);
@@ -91,31 +69,11 @@ const MobileNavBar = () => {
   return (
     <>
       {/* Mobile Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-slate-950 border-t border-slate-800 shadow-lg">
+      <nav className="fixed bottom-4 left-4 right-4 z-50">
         {/* Container com altura total */}
-        <div className="relative h-20">
-          {/* Círculo azul que se move horizontalmente */}
-          <div 
-            className={`absolute bg-blue-500 rounded-full shadow-lg transition-all duration-500 ease-out ${
-              isTransitioning ? 'animate-horizontal-slide' : ''
-            }`}
-            style={{
-              width: '60px',
-              height: '60px',
-              top: '-16px',
-              border: '4px solid #0f172a',
-              left: `calc(${activeIndex} * (100% / 5) + (100% / 10) - 30px)`,
-              zIndex: 10,
-              
-              boxShadow: isTransitioning 
-                ? '0 12px 40px rgba(59, 130, 246, 0.7), 0 0 0 4px rgba(59, 130, 246, 0.2)' 
-                : '0 8px 30px rgba(59, 130, 246, 0.4)',
-              transform: `scale(${isTransitioning ? 1.05 : 1})`
-            }}
-          />
-          
+        <div className="relative h-16 bg-slate-950/40 backdrop-blur-xl rounded-4xl border border-slate-800/30 shadow-xl px-1 py-2">
           {/* Container dos ícones com espaçamento uniforme */}
-          <div className="flex items-center justify-between  relative z-20 h-full">
+          <div className="flex items-center justify-between relative h-full">
           {navItems.map((item, index) => {
             const IconComponent = item.icon;
             const isActive = activeIndex === index;
@@ -126,31 +84,22 @@ const MobileNavBar = () => {
                 onClick={() => handleNavigation(index, item.path)}
                 onMouseEnter={() => prefetchPath(item.path)}
                 onTouchStart={() => prefetchPath(item.path)}
-                className={`relative flex flex-col items-center justify-center transition-all duration-300 ease-out ${
-                  isActive ? 'scale-105' : 'scale-100'
+                className={`relative flex flex-col items-center justify-center transition-colors duration-200 rounded-3xl ${
+                  isActive ? 'bg-blue-500/80 text-white' : 'bg-slate-800/10 text-slate-400 hover:text-blue-300'
                 }`}
                 style={{ 
-                  width: '20%',
-                  height: '64px',
+                  width: `${100 / navItems.length}%`,
+                  height: '48px',
+                  margin: '4px'
                 }}
                 aria-label={item.label}
+                aria-current={isActive ? 'true' : undefined}
               >
                 {/* Ícone */}
-                  <div className={`relative z-30 transition-all duration-300 ease-out ${
-                    isActive ? 'text-white -top-6 scale-110' : 'text-slate-400 scale-100 hover:text-blue-300'
-                  }`}>
-                  <IconComponent 
-                    size={26} 
-                    strokeWidth={isActive ? 2.5 : 2}
-                  />
-                  
-                  {/* Badge de notificações não lidas - apenas no ícone Bell */}
-                  {item.icon === Bell && unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg border-2 border-slate-950">
-                      {unreadCount <= 99 ? unreadCount : '99+'}
-                    </div>
-                  )}
-                </div>
+                <IconComponent 
+                  size={24} 
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
               </button>
             );
           })}
@@ -163,42 +112,7 @@ const MobileNavBar = () => {
         <div className="h-safe-area-inset-bottom" />
       </nav>
       
-      {/* Spacer para evitar sobreposição do conteúdo - aumentado para acomodar o círculo elevado */}
-      <div className="h-20" />
-      
-      <style jsx>{`
-        @keyframes horizontal-slide {
-          0% { 
-            transform: scale(1.05) translateX(0); 
-            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.7), 0 0 0 4px rgba(59, 130, 246, 0.2);
-          }
-          50% {
-            transform: scale(1.1) translateY(-2px);
-            box-shadow: 0 16px 50px rgba(59, 130, 246, 0.8), 0 0 0 6px rgba(59, 130, 246, 0.3);
-          }
-          100% { 
-            transform: scale(1.05) translateX(0); 
-            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.7), 0 0 0 4px rgba(59, 130, 246, 0.2);
-          }
-        }
-        
-        @keyframes pulse-glow {
-          0%, 100% { 
-            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
-          }
-          50% {
-            box-shadow: 0 12px 40px rgba(59, 130, 246, 0.6);
-          }
-        }
-        
-        .animate-horizontal-slide {
-          animation: horizontal-slide 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-        
-        .animate-pulse-glow {
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
-      `}</style>
+      {/* Spacer para evitar sobreposição do conteúdo */}
     </>
   );
 };

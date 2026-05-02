@@ -1,5 +1,8 @@
 // Gera cores consistentes baseadas no ID do usuário
-export function getUserColor(userId: string): string {
+export function getUserColor(userId: string, overrideColor?: string): string {
+  // Se o usuário tiver uma cor escolhida, retorna ela diretamente
+  if (overrideColor) return overrideColor;
+
   const colors = [
     'bg-red-500',
     'bg-blue-500', 
@@ -31,7 +34,13 @@ export function getUserColor(userId: string): string {
   return colors[index];
 }
 
-export function getUserColorDark(userId: string): string {
+export function getUserColorDark(userId: string, overrideColor?: string): string {
+  // Se o usuário tiver uma cor escolhida (versão clara), tenta fornecer a variante escura básica
+  if (overrideColor) {
+    // Converter classes "bg-xxx-500" para "bg-xxx-600" quando possível
+    return overrideColor.replace(/-500$/, '-600');
+  }
+
   const colorsDark = [
     'bg-red-600',
     'bg-blue-600', 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import type { CalendarEvent } from '@/types';
 import { 
   format, 
   startOfMonth, 
@@ -21,22 +22,11 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucid
 import { getUserColor } from '@/lib/userColors';
 import { getUserDisplayLetter } from '@/lib/userUtils';
 
-interface CalendarEvent {
-  id: string;
-  date: string;
-  userId: string;
-  userName: string;
-  userPhoto?: string;
-  title?: string;
-  createdAt: Date;
-  customLetter?: string;
-}
-
 interface CalendarProps {
   events: CalendarEvent[];
   onDateClick: (date: Date, hasUserEvent: boolean) => void;
   onRefresh?: () => Promise<void> | void;
-  usersMap?: Map<string, { customLetter?: string; displayName: string }>;
+  usersMap?: Map<string, { customLetter?: string; displayName: string; color?: string }>;
   currentMonth: Date;
   onMonthChange: (date: Date) => void;
   currentUser: {
@@ -45,6 +35,7 @@ interface CalendarProps {
     photoURL?: string;
     isAdmin: boolean;
     customLetter?: string;
+    color?: string;
   };
 }
 
@@ -110,9 +101,9 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
     const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
     
     return (
-      <div className="grid grid-cols-7 gap-2 mb-4">
+      <div className="grid grid-cols-7 gap-1 mb-4">
         {daysOfWeek.map(day => (
-          <div key={day} className="p-3 text-center text-sm font-semibold text-slate-300 bg-slate-800 rounded-lg border border-slate-700">
+          <div key={day} className="h-10 flex items-center justify-center text-sm font-semibold text-slate-300 bg-slate-800 rounded-lg border border-slate-700">
             {day}
           </div>
         ))}
@@ -159,27 +150,27 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
 
         days.push(
           <div
-            key={day.toString()}
-            className={`
-              relative min-h-[100px] p-3 border cursor-pointer calendar-cell transition-all duration-200
-              ${!isCurrentMonth 
-                ? 'bg-slate-900/70 text-slate-500 border-slate-800' 
-                : 'bg-slate-900 text-slate-100 border-slate-700'
-              }
-              ${isTodayDate ? 'bg-linear-to-br from-blue-950/60 to-slate-900 border-blue-400' : ''}
-              ${hasUserEvent ? 'ring-2 ring-blue-500/40 border-blue-500' : ''}
-              hover:bg-slate-800 hover:scale-105 active:scale-95
-            `}
-            onClick={() => handleDateClick(cloneDay)}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <span className={`
-                text-sm font-medium
-                ${isTodayDate ? 'text-blue-300 font-bold' : 'text-slate-200'}
-              `}>
-                {format(day, 'd')}
-              </span>
-            </div>
+              key={day.toString()}
+              className={`
+                relative min-h-[96px] p-2 border cursor-pointer calendar-cell transition-all duration-200
+                ${!isCurrentMonth 
+                  ? 'bg-slate-900/70 text-slate-500 border-slate-800' 
+                  : 'bg-slate-900 text-slate-100 border-slate-700'
+                }
+                ${isTodayDate ? 'bg-linear-to-br from-blue-950/60 to-slate-900 border-blue-400' : ''}
+                ${hasUserEvent ? 'ring-2 ring-blue-500/40 border-blue-500' : ''}
+                hover:bg-slate-800 hover:scale-105 active:scale-95
+              `}
+              onClick={() => handleDateClick(cloneDay)}
+            >
+              <div className="flex items-center justify-center mb-2">
+                <span className={`
+                  text-sm font-medium text-center block w-full
+                  ${isTodayDate ? 'text-blue-300 font-bold' : 'text-slate-200'}
+                `}>
+                  {format(day, 'd')}
+                </span>
+              </div>
             
             {isCurrentMonth && dayEvents.length > 0 && (
               <div className="flex flex-wrap gap-1 mt-2">
@@ -188,7 +179,11 @@ export default function Calendar({ events, onDateClick, onRefresh, usersMap, cur
                     key={event.id}
                     className={`
                       w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm user-avatar shadow-md
-                      ${getUserColor(event.userId)}
+                      ${getUserColor(
+                        event.userId,
+                        // preferir cor salva no usersMap, se existir; senão usar cor do evento; por fim, cor do usuário atual
+                        (usersMap && usersMap.get(event.userId)?.color) || event.color || (event.userId === currentUser.uid ? (currentUser as any).color : undefined)
+                      )}
                     `}
                     title={event.userName}
                   >

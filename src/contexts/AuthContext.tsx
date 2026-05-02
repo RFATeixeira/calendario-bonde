@@ -12,6 +12,7 @@ interface UserData {
   photoURL?: string;
   isAdmin: boolean;
   customLetter?: string;
+  color?: string;
 }
 
 interface AuthContextType {
@@ -57,6 +58,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             if (data.customLetter) {
               userData.customLetter = data.customLetter;
+            }
+            if (data.color) {
+              userData.color = data.color;
             }
             
             // Atualizar informações do usuário se necessário
@@ -113,6 +117,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               // Adicionar customLetter apenas se não for undefined
               if (userData.customLetter) {
                 firestoreData.customLetter = userData.customLetter;
+              }
+
+              // Adicionar color apenas se existir
+              if (userData.color) {
+                firestoreData.color = userData.color;
               }
 
               await setDoc(doc(db, 'users', firebaseUser.uid), firestoreData);

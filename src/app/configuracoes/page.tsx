@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { ArrowLeft, User, LogOut, Save } from 'lucide-react';
@@ -17,6 +17,8 @@ export default function ConfiguracoesPage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingName, setSavingName] = useState(false);
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -28,6 +30,8 @@ export default function ConfiguracoesPage() {
     setCustomLetter(user.customLetter || user.displayName.charAt(0).toUpperCase());
     // Inicializar com o nome atual do usuário
     setDisplayName(user.displayName || '');
+    // Inicializar cor selecionada
+    setSelectedColor((user as any).color || null);
   }, [user, router]);
 
   const handleSave = async () => {
@@ -43,6 +47,36 @@ export default function ConfiguracoesPage() {
     } catch (error) {
       console.error('Erro ao salvar letra personalizada:', error);
       alert('Erro ao salvar configurações. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveColor = async () => {
+    if (!user || !selectedColor) return;
+
+    setSaving(true);
+    try {
+      // Verificar duplicidade: nenhum outro usuário pode ter a mesma cor
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('color', '==', selectedColor));
+      const snapshot = await getDocs(q);
+
+      const conflict = snapshot.docs.find(d => d.id !== user.uid);
+      if (conflict) {
+        alert('Essa cor já está sendo usada por outro usuário. Escolha outra.');
+        setSaving(false);
+        return;
+      }
+
+      await updateDoc(doc(db, 'users', user.uid), {
+        color: selectedColor
+      });
+
+      alert('Cor salva com sucesso!');
+    } catch (error) {
+      console.error('Erro ao salvar cor:', error);
+      alert('Erro ao salvar cor. Tente novamente.');
     } finally {
       setSaving(false);
     }
@@ -106,27 +140,31 @@ export default function ConfiguracoesPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950">
-      {/* Header */}
-      <header className="bg-slate-950/80 shadow-sm border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => router.back()}
-                className="p-2 hover:bg-slate-800 rounded-lg transition-colors duration-200"
-              >
-                <ArrowLeft className="h-5 w-5 text-slate-300" />
-              </button>
-              <h1 className="text-xl font-semibold text-slate-100">
-                Configurações
-              </h1>
+      {/* Header (glass-pill style como Header.tsx) */}
+      <header className="sticky top-0 z-50 px-3 py-3 sm:px-6 sm:py-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white/5 backdrop-blur-2xl rounded-full border border-white/20 shadow-2xl px-6 sm:px-8 py-3 sm:py-4">
+            <div className="flex items-center justify-between h-12 sm:h-14">
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => router.back()}
+                  className="p-2 hover:bg-slate-800 rounded-lg transition-colors duration-200"
+                >
+                  <ArrowLeft className="h-5 w-5 text-slate-300" />
+                </button>
+                <h1 className="text-lg sm:text-xl font-semibold text-slate-100">
+                  Configurações
+                </h1>
+              </div>
+
+              <div />
             </div>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
         <div className="space-y-6">
           {/* Perfil do usuário */}
           <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6">
@@ -135,23 +173,15 @@ export default function ConfiguracoesPage() {
             </h2>
             
             <div className="flex items-center space-x-4 mb-6">
-              {user.photoURL ? (
+              {user.photoURL && !imgError ? (
                 <img
                   src={user.photoURL}
                   alt={user.displayName}
                   className="h-16 w-16 rounded-full object-cover"
-                  onError={(e) => {
-                    // Se a imagem falhar ao carregar, esconder e mostrar fallback
-                    const target = e.target as HTMLImageElement;
-                    target.style.display = 'none';
-                    const parent = target.parentElement;
-                    if (parent && !parent.querySelector('.config-fallback')) {
-                      const fallbackDiv = document.createElement('div');
-                      fallbackDiv.className = 'config-fallback h-16 w-16 bg-gray-300 rounded-full flex items-center justify-center';
-                      fallbackDiv.innerHTML = '<svg class="h-8 w-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>';
-                      parent.appendChild(fallbackDiv);
-                    }
-                  }}
+                  crossOrigin="anonymous"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={() => setImgError(true)}
                 />
               ) : (
                 <div className="h-16 w-16 bg-gray-300 rounded-full flex items-center justify-center">
@@ -230,7 +260,7 @@ export default function ConfiguracoesPage() {
                   <div
                     className={`
                       w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg
-                      ${getUserColor(user.uid)}
+                      ${getUserColor(user.uid, (user as any).color)}
                     `}
                   >
                     {customLetter}
@@ -271,6 +301,40 @@ export default function ConfiguracoesPage() {
                   </>
                 )}
               </button>
+            </div>
+          
+            {/* Seleção de cor do usuário */}
+            <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6 mt-6">
+              <h2 className="text-lg font-semibold text-slate-100 mb-4">Cor do Marcador</h2>
+
+              <div className="flex items-center gap-3 flex-wrap mb-3">
+                {[
+                  'bg-red-500','bg-blue-500','bg-green-500','bg-yellow-500','bg-purple-500','bg-pink-500','bg-indigo-500','bg-orange-500','bg-teal-500','bg-cyan-500','bg-lime-500','bg-emerald-500','bg-violet-500','bg-fuchsia-500','bg-rose-500','bg-amber-500'
+                ].map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setSelectedColor(c)}
+                    className={`w-10 h-10 rounded-full ${c} flex items-center justify-center ring-2 ${selectedColor === c ? 'ring-white' : 'ring-transparent'} transition-all`}
+                    aria-label={c}
+                  />
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleSaveColor}
+                  disabled={saving || !selectedColor}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Salvar cor
+                </button>
+                <button
+                  onClick={() => setSelectedColor(null)}
+                  className="px-4 py-2 bg-slate-800 text-slate-200 rounded-lg hover:bg-slate-700"
+                >
+                  Limpar
+                </button>
+              </div>
             </div>
           </div>
 
