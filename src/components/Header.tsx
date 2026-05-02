@@ -20,10 +20,10 @@ export default function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 px-3 py-3 sm:px-6 sm:py-4">
+    <header className="sticky top-0 z-50 px-3 py-2 sm:px-6 sm:py-3">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white/5 backdrop-blur-2xl rounded-full border border-white/20 shadow-2xl px-6 sm:px-8 py-3 sm:py-4">
-          <div className="flex justify-between items-center h-12 sm:h-14">
+        <div className="bg-white/5 backdrop-blur-2xl rounded-full border border-white/20 shadow-2xl px-6 sm:px-8 py-2.5 sm:py-3">
+          <div className="flex justify-between items-center h-10 sm:h-12">
           {/* Logo e título */}
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div className="h-7 w-7 sm:h-8 sm:w-8 flex items-center justify-center">

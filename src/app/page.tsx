@@ -8,7 +8,6 @@ import {
   addDoc, 
   deleteDoc, 
   doc, 
-  getDoc,
   onSnapshot, 
   query, 
   orderBy,
@@ -23,8 +22,6 @@ import Header from '@/components/Header';
 import Calendar from '@/components/Calendar';
 import UserLegend from '@/components/UserLegend';
 import UserSelectionModal from '@/components/UserSelectionModal';
-import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
-import UpdateNotification from '@/components/UpdateNotification';
 
 
 
@@ -32,83 +29,34 @@ export default function Home() {
   const { user, loading, isAdminMode } = useAuth();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [usersMap, setUsersMap] = useState<Map<string, UserMapValue>>(new Map());
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Função para carregar informações atuais dos usuários
-  const loadUsersData = async (userIds: string[]) => {
-    try {
-      const uniqueUserIds = [...new Set(userIds)];
-      const newUsersMap = new Map();
-      
-      for (const userId of uniqueUserIds) {
-        try {
-          const userDocRef = doc(db, 'users', userId);
-          const userDoc = await getDoc(userDocRef);
-          
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            newUsersMap.set(userId, {
-              customLetter: userData.customLetter,
-              displayName: userData.displayName || userData.email?.split('@')[0] || 'Usuário',
-              color: userData.color
-            });
-          }
-        } catch (error) {
-          console.error(`Erro ao carregar dados do usuário ${userId}:`, error);
-        }
-      }
-      
-      setUsersMap(newUsersMap);
-    } catch (error) {
-      console.error('Erro ao carregar dados dos usuários:', error);
-    }
-  };
-
-  // Função para recarregar eventos manualmente
-  const refreshEvents = async () => {
+  useEffect(() => {
     if (!user) return;
 
-    setEventsLoading(true);
-    
-    try {
-      const eventsRef = collection(db, 'events');
-      const q = query(eventsRef, orderBy('createdAt', 'desc'));
-      const snapshot = await getDocs(q);
-      
-      const eventsData: CalendarEvent[] = [];
-      const userIds: string[] = [];
-      
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        eventsData.push({
-          id: doc.id,
-          date: data.date,
-          userId: data.userId,
-          userName: data.userName,
-          userPhoto: data.userPhoto,
-          title: data.title,
-          createdAt: data.createdAt.toDate(),
-            customLetter: data.customLetter,
-            color: data.color,
+    const usersRef = collection(db, 'users');
+    const unsubscribeUsers = onSnapshot(usersRef, (snapshot) => {
+      const newUsersMap = new Map<string, UserMapValue>();
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        newUsersMap.set(docSnap.id, {
+          customLetter: data.customLetter,
+          displayName: data.displayName || data.email?.split('@')[0] || 'Usuário',
+          color: data.color
         });
-        userIds.push(data.userId);
       });
-      
-      setEvents(eventsData);
-      
-      // Carrega dados atuais dos usuários
-      if (userIds.length > 0) {
-        await loadUsersData(userIds);
-      }
-    } catch (error) {
-      console.error('Erro ao recarregar eventos:', error);
-    } finally {
-      setEventsLoading(false);
-    }
-  };
+
+      setUsersMap(newUsersMap);
+      setUsersLoading(false);
+    });
+
+    return unsubscribeUsers;
+  }, [user]);
 
   // Carregar eventos em tempo real
   useEffect(() => {
@@ -119,7 +67,6 @@ export default function Home() {
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const eventsData: CalendarEvent[] = [];
-      const userIds: string[] = [];
       
       snapshot.forEach((doc) => {
         const data = doc.data();
@@ -134,16 +81,10 @@ export default function Home() {
             customLetter: data.customLetter,
             color: data.color,
         });
-        userIds.push(data.userId);
       });
       
       setEvents(eventsData);
       setEventsLoading(false);
-      
-      // Carrega dados atuais dos usuários
-      if (userIds.length > 0) {
-        await loadUsersData(userIds);
-      }
     });
 
     return unsubscribe;
@@ -251,7 +192,6 @@ export default function Home() {
   if (!user) {
     return (
       <>
-        <ServiceWorkerRegistration />
         <LoginComponent />
       </>
     );
@@ -259,13 +199,11 @@ export default function Home() {
 
   return (
     <>
-      <ServiceWorkerRegistration />
-      <UpdateNotification />
       <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950 pb-24">
         <Header />
         
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          {eventsLoading ? (
+          {eventsLoading || usersLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
             </div>
@@ -274,7 +212,6 @@ export default function Home() {
               <Calendar
                 events={events}
                 onDateClick={handleDateClick}
-                onRefresh={refreshEvents}
                 usersMap={usersMap}
                 currentMonth={currentMonth}
                 onMonthChange={setCurrentMonth}

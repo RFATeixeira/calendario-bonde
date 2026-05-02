@@ -109,10 +109,10 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-950 via-slate-900 to-blue-950">
-      <header className="sticky top-0 z-50 px-3 py-3 sm:px-6 sm:py-4">
+      <header className="sticky top-0 z-50 px-3 py-2 sm:px-6 sm:py-3">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white/5 backdrop-blur-2xl rounded-full border border-white/20 shadow-2xl px-6 sm:px-8 py-3 sm:py-4">
-            <div className="flex items-center justify-between h-12 sm:h-14">
+          <div className="bg-white/5 backdrop-blur-2xl rounded-full border border-white/20 shadow-2xl px-6 sm:px-8 py-2.5 sm:py-3">
+            <div className="flex items-center justify-between h-10 sm:h-12">
               <div className="flex items-center space-x-3">
                 <button onClick={() => router.back()} className="p-2 hover:bg-slate-800 rounded-lg transition-colors duration-200">
                   <ArrowLeft className="h-5 w-5 text-slate-300" />
@@ -125,7 +125,7 @@ export default function AdminUsersPage() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-24">
         <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 p-6 space-y-4">
           {loading ? (
             <div className="text-slate-300">Carregando usuários...</div>

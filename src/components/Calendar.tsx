@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import type { CalendarEvent } from '@/types';
 import { 
   format, 
@@ -18,14 +17,13 @@ import {
   formatISO
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getUserColor } from '@/lib/userColors';
 import { getUserDisplayLetter } from '@/lib/userUtils';
 
 interface CalendarProps {
   events: CalendarEvent[];
   onDateClick: (date: Date, hasUserEvent: boolean) => void;
-  onRefresh?: () => Promise<void> | void;
   usersMap?: Map<string, { customLetter?: string; displayName: string; color?: string }>;
   currentMonth: Date;
   onMonthChange: (date: Date) => void;
@@ -39,17 +37,7 @@ interface CalendarProps {
   };
 }
 
-export default function Calendar({ events, onDateClick, onRefresh, usersMap, currentMonth, onMonthChange, currentUser }: CalendarProps) {
-
-  // Sistema de pull-to-refresh
-  const handleRefresh = async () => {
-    if (onRefresh) {
-      await onRefresh();
-    } else {
-      // Fallback: recarrega a página
-      window.location.reload();
-    }
-  };
+export default function Calendar({ events, onDateClick, usersMap, currentMonth, onMonthChange, currentUser }: CalendarProps) {
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(monthStart);

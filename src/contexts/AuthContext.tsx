@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '@/lib/firebase';
 
 interface UserData {
@@ -32,13 +32,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAdminMode, setIsAdminMode] = useState(false);
 
   useEffect(() => {
+    let unsubscribeUserDoc: (() => void) | undefined;
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      unsubscribeUserDoc?.();
+      unsubscribeUserDoc = undefined;
+
       try {
         if (firebaseUser) {
           console.log('👤 Usuário autenticado:', firebaseUser.email);
           
           // Buscar dados adicionais do usuário no Firestore
-          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
           
           let userData: UserData;
           
@@ -49,19 +55,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               uid: firebaseUser.uid,
               email: firebaseUser.email!,
               displayName: firebaseUser.displayName!,
-              isAdmin: data.isAdmin || false
+              isAdmin: data.isAdmin || false,
+              photoURL: firebaseUser.photoURL || data.photoURL || undefined,
+              customLetter: data.customLetter,
+              color: data.color
             };
-
-            // Adicionar campos opcionais apenas se existirem
-            if (firebaseUser.photoURL) {
-              userData.photoURL = firebaseUser.photoURL;
-            }
-            if (data.customLetter) {
-              userData.customLetter = data.customLetter;
-            }
-            if (data.color) {
-              userData.color = data.color;
-            }
             
             // Atualizar informações do usuário se necessário
             try {
@@ -90,14 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               uid: firebaseUser.uid,
               email: firebaseUser.email!,
               displayName: firebaseUser.displayName!,
-              isAdmin: false
+              isAdmin: false,
+              photoURL: firebaseUser.photoURL || undefined
             };
 
-            // Adicionar photoURL apenas se existir
-            if (firebaseUser.photoURL) {
-              userData.photoURL = firebaseUser.photoURL;
-            }
-            
             try {
               // Preparar dados sem campos undefined
               const firestoreData: any = {
@@ -132,6 +126,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               console.log('🔄 Continuando com dados básicos do Firebase Auth');
             }
           }
+
+          unsubscribeUserDoc = onSnapshot(userDocRef, (snapshot) => {
+            if (!snapshot.exists()) return;
+
+            const data = snapshot.data();
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email!,
+              displayName: data.displayName || firebaseUser.displayName || 'Usuário',
+              photoURL: firebaseUser.photoURL || data.photoURL || undefined,
+              isAdmin: data.isAdmin || false,
+              customLetter: data.customLetter,
+              color: data.color
+            });
+          });
           
           setUser(userData);
           console.log('✅ Usuário definido no contexto');
@@ -162,7 +171,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribeUserDoc?.();
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
