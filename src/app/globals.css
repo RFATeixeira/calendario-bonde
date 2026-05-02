@@ -27,8 +27,27 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
   overflow-x: hidden;
   scrollbar-width: none;
+  min-height: 100dvh;
+}
+
+/* Status bar protection - blur overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: linear-gradient(to bottom, rgba(2, 6, 23, 0.4), rgba(2, 6, 23, 0.1));
+  backdrop-filter: blur(15px);
+  z-index: 50;
+  pointer-events: none;
 }
 
 html {
@@ -42,16 +61,6 @@ body::-webkit-scrollbar {
   width: 0;
   height: 0;
   display: none;
-}
-
-/* PWA specific styles */
-@media (display-mode: fullscreen) {
-  body {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
 }
 
 /* Mobile optimizations */

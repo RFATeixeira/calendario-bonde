@@ -63,7 +63,7 @@ export default function RootLayout({
         <meta name="msapplication-tap-highlight" content="no" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} dark antialiased min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}
       >
         <AuthProvider>
           <LayoutWrapper>
